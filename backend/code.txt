@@ -1,0 +1,756 @@
+import { execute } from "../services/executeService.js";
+
+/**
+ * POST /api/execute
+ * Body:
+ * {
+ *   language: "c" | "cpp" | "java" | "python",
+ *   filePath: "main.cpp",
+ *   stdin?: "input text"
+ * }
+ */
+export const executeCode = async (req, res) => {
+  const { language, filePath, stdin } = req.body;
+
+  /* -------- Validation -------- */
+
+  if (!language || !filePath) {
+    return res.status(400).json({
+      output: "",
+      error: "language and filePath are required",
+    });
+  }
+
+  const allowedLanguages = ["c", "cpp", "java", "python"];
+  if (!allowedLanguages.includes(language)) {
+    return res.status(400).json({
+      output: "",
+      error: "Unsupported language",
+    });
+  }
+
+  /* -------- Execution -------- */
+
+  try {
+    const result = await execute(
+      language,
+      filePath,
+      stdin || "" // ✅ STDIN support
+    );
+
+    return res.json({
+      output: result.stdout || "",
+      error: result.stderr || "",
+    });
+  } catch (err) {
+    console.error("Execution failed:", err);
+
+    return res.status(500).json({
+      output: "",
+      error: err.message || "Execution error",
+    });
+  }
+};
+
+import * as fileService from "../services/fileService.js";
+
+export const loadWorkspace = (req, res) => {
+  try {
+    res.json(fileService.readWorkspace());
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load workspace" });
+  }
+};
+
+export const createFile = (req, res) => {
+  try {
+    fileService.createFile(req.body.path);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Create file failed" });
+  }
+};
+
+export const createFolder = (req, res) => {
+  try {
+    fileService.createFolder(req.body.path);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Create folder failed" });
+  }
+};
+
+export const saveFile = (req, res) => {
+  try {
+    fileService.saveFile(req.body.path, req.body.content);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Save failed" });
+  }
+};
+
+export const deleteNode = (req, res) => {
+  try {
+    fileService.deleteNode(req.body.path);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Delete failed" });
+  }
+};
+
+export const renameNode = (req, res) => {
+  try {
+    fileService.renameNode(req.body.oldPath, req.body.newPath);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Rename failed" });
+  }
+};
+
+export const readFile = (req, res) => {
+  try {
+    const { path } = req.query;
+    const content = fileService.readFile(path);
+    res.json({ content });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Read file failed" });
+  }
+};
+
+import { spawn } from "child_process";
+
+const processes = new Map();
+
+export function startProcess({ id, command, cwd, onData, onPort }) {
+  if (processes.has(id)) {
+    throw new Error("Process already running");
+  }
+
+  const child = spawn(command, {
+    cwd,
+    shell: true,
+    env: process.env,
+  });
+
+  const handleData = (data) => {
+    const text = data.toString();
+    onData(text);
+
+    // 🔥 PORT DETECTION (React, Vite, Angular, Express)
+    const portMatch =
+      text.match(/localhost:(\d+)/) ||
+      text.match(/127\.0\.0\.1:(\d+)/);
+
+    if (portMatch && onPort) {
+      onPort(portMatch[1]);
+    }
+  };
+
+  child.stdout.on("data", handleData);
+  child.stderr.on("data", handleData);
+
+  child.on("close", () => {
+    processes.delete(id);
+    onData(`\n[${id}] process exited\n`);
+  });
+
+  processes.set(id, child);
+}
+
+export function stopProcess(id) {
+  const proc = processes.get(id);
+  if (proc) {
+    proc.kill("SIGTERM");
+    processes.delete(id);
+  }
+}
+
+export function isRunning(id) {
+  return processes.has(id);
+}
+ 
+ import express from "express";
+import { executeCode } from "../controllers/executeController.js";
+
+const router = express.Router();
+
+
+router.post("/", executeCode);
+
+export default router; 
+
+import express from "express";
+import {
+  loadWorkspace,
+  createFile,
+  createFolder,
+  saveFile,
+  deleteNode,
+  renameNode,
+  readFile,
+} from "../controllers/fileController.js";
+
+const router = express.Router();
+
+router.get("/load", loadWorkspace);
+router.post("/file", createFile);
+router.post("/folder", createFolder);
+router.put("/save", saveFile);
+router.delete("/delete", deleteNode);
+router.put("/rename", renameNode);
+router.get("/read", readFile);
+
+
+export default router;
+ 
+ import express from "express";
+import {
+  startProcess,
+  stopProcess,
+  isRunning,
+} from "../processManager/processManager.js";
+import { broadcastToTerminals } from "../terminalServer.js";
+
+const router = express.Router();
+
+/* ---------------- START PROCESS ---------------- */
+
+router.post("/start", (req, res) => {
+  const { id, command, cwd } = req.body;
+
+  if (!id || !command || !cwd) {
+    return res.status(400).json({
+      error: "id, command and cwd are required",
+    });
+  }
+
+  try {
+    startProcess({
+      id,
+      command,
+      cwd,
+
+      /* ---- STREAM LOGS ---- */
+      onData: (data) => {
+        broadcastToTerminals({
+          type: "output",
+          terminalId: id,
+          data,
+        });
+      },
+
+      /* ---- PORT DETECTION ---- */
+      onPort: (port) => {
+        broadcastToTerminals({
+          type: "preview",
+          terminalId: id,
+          port,
+        });
+      },
+    });
+
+    broadcastToTerminals({
+      type: "output",
+      terminalId: id,
+      data: `\n[${id}] process started\n`,
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    broadcastToTerminals({
+      type: "output",
+      terminalId: id,
+      data: `\n[${id}] failed to start: ${err.message}\n`,
+    });
+
+    res.status(400).json({ error: err.message });
+  }
+});
+
+/* ---------------- STOP PROCESS ---------------- */
+
+router.post("/stop", (req, res) => {
+  const { id } = req.body;
+
+  if (!id) {
+    return res.status(400).json({ error: "id is required" });
+  }
+
+  stopProcess(id);
+
+  broadcastToTerminals({
+    type: "output",
+    terminalId: id,
+    data: `\n[${id}] process stopped\n`,
+  });
+
+  res.json({ success: true });
+});
+
+/* ---------------- STATUS ---------------- */
+
+router.get("/status/:id", (req, res) => {
+  res.json({
+    running: isRunning(req.params.id),
+  });
+});
+
+export default router;
+ 
+ import express from "express";
+import { createMERNProject } from "../services/projectService.js";
+
+const router = express.Router();
+
+router.post("/mern", (req, res) => {
+  const { name } = req.body;
+  createMERNProject(name);
+  res.json({ success: true });
+});
+
+export default router;
+ 
+ import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+/* ---------------- ES MODULE DIRNAME FIX ---------------- */
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+/* ---------------- WORKSPACE ROOT ---------------- */
+
+const WORKSPACE_ROOT = path.join(__dirname, "..", "workspace", "default");
+
+/* ---------------- ENSURE ROOT EXISTS (ONLY ONCE) ---------------- */
+
+if (!fs.existsSync(WORKSPACE_ROOT)) {
+  fs.mkdirSync(WORKSPACE_ROOT, { recursive: true });
+}
+
+/* ---------------- READ WORKSPACE TREE ---------------- */
+
+export function readWorkspace(dir = WORKSPACE_ROOT) {
+  if (!fs.existsSync(dir)) {
+    return {
+      name: "root",
+      type: "folder",
+      children: [],
+    };
+  }
+
+  const stats = fs.statSync(dir);
+  const name = dir === WORKSPACE_ROOT ? "root" : path.basename(dir);
+
+  if (stats.isFile()) {
+    return { name, type: "file" };
+  }
+
+  return {
+    name,
+    type: "folder",
+    children: fs.readdirSync(dir).map((child) =>
+      readWorkspace(path.join(dir, child))
+    ),
+  };
+}
+
+/* ---------------- CREATE FILE ---------------- */
+
+export function createFile(relativePath) {
+  const fullPath = path.join(WORKSPACE_ROOT, relativePath);
+
+  // ✅ create parent folders ONLY
+  const parentDir = path.dirname(fullPath);
+  if (!fs.existsSync(parentDir)) {
+    fs.mkdirSync(parentDir, { recursive: true });
+  }
+
+  if (!fs.existsSync(fullPath)) {
+    fs.writeFileSync(fullPath, "");
+  }
+}
+
+/* ---------------- CREATE FOLDER ---------------- */
+
+export function createFolder(relativePath) {
+  const fullPath = path.join(WORKSPACE_ROOT, relativePath);
+
+  if (!fs.existsSync(fullPath)) {
+    fs.mkdirSync(fullPath, { recursive: true });
+  }
+}
+
+/* ---------------- SAVE FILE ---------------- */
+
+export function saveFile(relativePath, content) {
+  const fullPath = path.join(WORKSPACE_ROOT, relativePath);
+
+  const parentDir = path.dirname(fullPath);
+  if (!fs.existsSync(parentDir)) {
+    fs.mkdirSync(parentDir, { recursive: true });
+  }
+
+  fs.writeFileSync(fullPath, content);
+}
+
+/* ---------------- DELETE NODE ---------------- */
+
+export function deleteNode(relativePath) {
+  const fullPath = path.join(WORKSPACE_ROOT, relativePath);
+
+  if (fs.existsSync(fullPath)) {
+    fs.rmSync(fullPath, { recursive: true, force: true });
+  }
+}
+
+/* ---------------- RENAME NODE ---------------- */
+
+export function renameNode(oldPath, newPath) {
+  fs.renameSync(
+    path.join(WORKSPACE_ROOT, oldPath),
+    path.join(WORKSPACE_ROOT, newPath)
+  );
+}
+
+export function readFile(relativePath) {
+  const fullPath = path.join(WORKSPACE_ROOT, relativePath);
+
+  if (!fs.existsSync(fullPath)) return "";
+
+  return fs.readFileSync(fullPath, "utf-8");
+}
+ 
+  import { spawn } from "child_process";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
+import os from "os";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const WORKSPACE = path.join(__dirname, "..", "workspace", "default");
+const isWindows = os.platform() === "win32";
+
+/* ---------------- Prompt Sanitizer ---------------- */
+
+function sanitizePrompts(code, language) {
+  const patterns = {
+    cpp: /^\s*(cout\s*<<.*"(Enter|enter|input|Input).*)/i,
+    c: /^\s*(printf\s*\(.*"(Enter|enter|input|Input).*)/i,
+    java: /^\s*(System\.out\.print.*"(Enter|enter|input|Input).*)/i,
+    python: /^\s*(print\s*\(.*"(Enter|enter|input|Input).*)/i,
+  };
+
+  const regex = patterns[language];
+  if (!regex) return code;
+
+  return code
+    .split("\n")
+    .map((line) => (regex.test(line) ? `// ${line}` : line))
+    .join("\n");
+}
+
+/* ---------------- Run Command ---------------- */
+
+function runCommand(command, args, cwd, stdin = "") {
+  return new Promise((resolve) => {
+    const child = spawn(command, args, { cwd });
+
+    let stdout = "";
+    let stderr = "";
+
+    if (stdin) child.stdin.write(stdin);
+    child.stdin.end();
+
+    child.stdout.on("data", (d) => (stdout += d.toString()));
+    child.stderr.on("data", (d) => (stderr += d.toString()));
+
+    child.on("close", () => resolve({ stdout, stderr }));
+  });
+}
+
+/* ---------------- Execute ---------------- */
+
+export async function execute(language, filePath, stdin = "") {
+  const fullPath = path.join(WORKSPACE, filePath);
+  const dir = path.dirname(fullPath);
+  const fileName = path.basename(filePath);
+  const baseName = fileName.split(".")[0];
+
+  const originalCode = fs.readFileSync(fullPath, "utf8");
+  const sanitizedCode = sanitizePrompts(originalCode, language);
+
+  let tempFile = null;
+  let result;
+
+  try {
+    /* ---------- C++ ---------- */
+    if (language === "cpp") {
+      tempFile = path.join(dir, `__temp_${Date.now()}_${fileName}`);
+      fs.writeFileSync(tempFile, sanitizedCode);
+
+      const compile = await runCommand(
+        "g++",
+        [path.basename(tempFile), "-o", "program.exe"],
+        dir
+      );
+      if (compile.stderr) return compile;
+
+      result = await runCommand(
+        isWindows ? "program.exe" : "./program",
+        [],
+        dir,
+        stdin
+      );
+    }
+
+    /* ---------- C ---------- */
+    else if (language === "c") {
+      tempFile = path.join(dir, `__temp_${Date.now()}_${fileName}`);
+      fs.writeFileSync(tempFile, sanitizedCode);
+
+      const compile = await runCommand(
+        "gcc",
+        [path.basename(tempFile), "-o", "program.exe"],
+        dir
+      );
+      if (compile.stderr) return compile;
+
+      result = await runCommand(
+        isWindows ? "program.exe" : "./program",
+        [],
+        dir,
+        stdin
+      );
+    }
+
+    /* ---------- JAVA (SPECIAL HANDLING) ---------- */
+    else if (language === "java") {
+      // Java requires filename = public class name
+      fs.writeFileSync(fullPath, sanitizedCode);
+
+      const compile = await runCommand("javac", [fileName], dir);
+
+      // Restore original code immediately
+      fs.writeFileSync(fullPath, originalCode);
+
+      if (compile.stderr) return compile;
+
+      result = await runCommand("java", [baseName], dir, stdin);
+    }
+
+    /* ---------- NODE.JS ---------- */
+    else if (language === "node") {
+      result = await runCommand(
+        "node",
+        [fileName],
+        dir,
+        stdin
+      );
+    }
+    
+    /* ---------- PYTHON ---------- */
+    else if (language === "python") {
+      tempFile = path.join(dir, `__temp_${Date.now()}_${fileName}`);
+      fs.writeFileSync(tempFile, sanitizedCode);
+
+      result = await runCommand("python", [path.basename(tempFile)], dir, stdin);
+    }
+  } finally {
+    // Clean up temp file (Java does not use temp files)
+    if (tempFile && fs.existsSync(tempFile)) {
+      fs.unlinkSync(tempFile);
+    }
+  }
+  return result;
+}
+
+import fs from "fs";
+import path from "path";
+import { execSync } from "child_process";
+
+const WORKSPACE = path.join(process.cwd(), "workspace", "default");
+
+export function createMERNProject(name) {
+  const projectPath = path.join(WORKSPACE, name);
+  fs.mkdirSync(projectPath, { recursive: true });
+
+  execSync(`npm init -y`, { cwd: projectPath });
+
+  // Server
+  execSync(`npm install express mongoose cors`, { cwd: projectPath });
+  fs.mkdirSync(path.join(projectPath, "server"));
+
+  // Client
+  execSync(`npm create vite@latest client -- --template react`, {
+    cwd: projectPath,
+    stdio: "inherit",
+  });
+}
+
+
+import { WebSocketServer, WebSocket } from "ws";
+import pty from "node-pty";
+import os from "os";
+import path from "path";
+import { randomUUID } from "crypto";
+
+const shell = os.platform() === "win32" ? "powershell.exe" : "bash";
+
+/* ---------------- GLOBAL CLIENT REGISTRY ---------------- */
+
+export const terminalClients = new Set();
+
+/* ---------------- BROADCAST HELPER ---------------- */
+
+export function broadcastToTerminals(message) {
+  for (const ws of terminalClients) {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(message));
+    }
+  }
+}
+
+/* ---------------- TERMINAL SERVER ---------------- */
+import { WebSocketServer, WebSocket } from "ws";
+import pty from "node-pty";
+import os from "os";
+import path from "path";
+
+const shell = os.platform() === "win32" ? "powershell.exe" : "bash";
+
+export const terminalClients = new Set();
+
+export function setupTerminalServer(server) {
+  const wss = new WebSocketServer({ server });
+
+  wss.on("connection", (ws) => {
+    terminalClients.add(ws);
+
+    const terminals = new Map(); // terminalId -> pty
+
+    ws.on("message", (raw) => {
+      const msg = JSON.parse(raw.toString());
+
+      /* -------- CREATE TERMINAL -------- */
+      if (msg.type === "create") {
+        const id = msg.terminalId; // 🔥 frontend controls ID
+
+        if (terminals.has(id)) {
+          ws.send(JSON.stringify({ type: "created", terminalId: id }));
+          return;
+        }
+
+        const ptyProcess = pty.spawn(shell, [], {
+          name: "xterm-color",
+          cwd: path.join(process.cwd(), "workspace", "default"),
+          env: process.env,
+        });
+
+        terminals.set(id, ptyProcess);
+
+        ptyProcess.onData((data) => {
+          ws.send(
+            JSON.stringify({
+              type: "output",
+              terminalId: id,
+              data,
+            })
+          );
+        });
+
+        ws.send(
+          JSON.stringify({
+            type: "created",
+            terminalId: id,
+          })
+        );
+      }
+
+      /* -------- INPUT -------- */
+      if (msg.type === "input") {
+        const term = terminals.get(msg.terminalId);
+        if (term) term.write(msg.data);
+      }
+
+      /* -------- KILL -------- */
+      if (msg.type === "kill") {
+        const term = terminals.get(msg.terminalId);
+        if (term) {
+          term.kill();
+          terminals.delete(msg.terminalId);
+        }
+      }
+    });
+
+    ws.on("close", () => {
+      terminalClients.delete(ws);
+      terminals.forEach((t) => t.kill());
+      terminals.clear();
+    });
+  });
+}
+
+
+ import express from "express";
+import cors from "cors";
+import http from "http";
+import path from "path";
+import { fileURLToPath } from "url";
+
+import fileRoutes from "./routes/fileRoutes.js";
+import executeRoutes from "./routes/executeRoutes.js";
+import projectRoutes from "./routes/projectRoutes.js";
+import processRoutes from "./routes/processRoutes.js";
+import { setupTerminalServer } from "./terminalServer.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+/* ---------------- API ROUTES ---------------- */
+
+app.use("/api/files", fileRoutes);
+app.use("/api/execute", executeRoutes);
+app.use("/api/projects", projectRoutes);
+app.use("/api/process", processRoutes);
+/* ---------------- STATIC WEB PREVIEW ---------------- */
+/*
+  Allows:
+  http://localhost:5000/preview/index.html
+  http://localhost:5000/preview/style.css
+  http://localhost:5000/preview/script.js
+*/
+app.use(
+  "/preview",
+  express.static(path.join(__dirname, "workspace", "default"))
+);
+
+/* ---------------- SERVER + TERMINAL ---------------- */
+
+const server = http.createServer(app);
+
+// WebSocket terminal (node-pty)
+setupTerminalServer(server);
+
+const PORT = 5000;
+server.listen(PORT, () => {
+  console.log(`Backend running on http://localhost:${PORT}`);
+});
+
+This is the backend of the project it it neccessary to send the frontend or right we will do backend only. 
+  

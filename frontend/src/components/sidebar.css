@@ -1,0 +1,45 @@
+.sidebar {
+  width: 260px;
+  background: #252526;
+  border-right: 1px solid #2d2d2d;
+  display: flex;
+  flex-direction: column;
+  font-family: "Segoe UI", sans-serif;
+}
+
+/* HEADER */
+.sidebar-header {
+  height: 35px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #2d2d2d;
+}
+
+.sidebar-title {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #bbbbbb;
+}
+
+/* HEADER BUTTONS */
+.sidebar-actions button {
+  background: none;
+  border: none;
+  color: #cccccc;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.sidebar-actions button:hover {
+  color: #ffffff;
+}
+
+/* TREE AREA */
+.sidebar-tree {
+  flex: 1;
+  padding: 6px 4px;
+  overflow-y: auto;
+}

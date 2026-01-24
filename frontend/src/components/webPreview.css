@@ -1,0 +1,24 @@
+.web-preview {
+  display: flex;
+  flex-direction: column;
+  height: 300px; /* 🔥 fixed height */
+  border-top: 1px solid #2a2a2a;
+  background-color: #1e1e1e;
+}
+
+.preview-header {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #cccccc;
+  background-color: #252526;
+  border-bottom: 1px solid #2a2a2a;
+  text-transform: uppercase;
+}
+
+.web-preview iframe {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background-color: #ffffff;
+}

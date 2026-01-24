@@ -1,0 +1,1013 @@
+import Editor from "@monaco-editor/react";
+import { useWorkspace } from "../context/WorkspaceContext";
+import "./codeEditor.css";
+
+const languageMap = {
+  cpp: "cpp",
+  c: "c",
+  py: "python",
+  java: "java",
+  js: "javascript",
+};
+
+export default function CodeEditor() {
+  const { activeFile, fileContents, updateContent } = useWorkspace();
+
+  /* EMPTY STATE */
+  if (!activeFile) {
+    return (
+      <div className="editor-empty">
+        <p>Open a file to start coding</p>
+      </div>
+    );
+  }
+
+  const ext = activeFile.split(".").pop();
+  const language = languageMap[ext] || "plaintext";
+
+  return (
+    <div className="editor-wrapper">
+      {/* EDITOR */}
+      <div className="editor-container">
+        <Editor
+          theme="vs-dark"
+          language={language}
+          value={fileContents[activeFile] || ""}
+          onChange={(v) => updateContent(activeFile, v || "")}
+          options={{
+            fontSize: 14,
+            fontFamily: "JetBrains Mono",
+            minimap: { enabled: false },
+            wordWrap: "on",
+            smoothScrolling: true,
+            cursorSmoothCaretAnimation: true,
+            automaticLayout: true,
+          }}
+          height="100%"
+        />
+      </div>
+    </div>
+  );
+}
+
+import { useState } from "react";
+
+export default function CreateProject() {
+  const [name, setName] = useState("");
+
+  const createMERN = async () => {
+    await fetch("http://localhost:5000/api/projects/mern", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    alert("Project created");
+  };
+
+  return (
+    <div>
+      <input
+        placeholder="Project name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+      />
+      <button onClick={createMERN}>Create MERN</button>
+    </div>
+  );
+}
+
+import { useWorkspace } from "../context/WorkspaceContext";
+import "./editorTabs.css";
+
+export default function EditorTabs() {
+  const { openTabs, activeFile, openFile, closeTab } = useWorkspace();
+
+  return (
+    <div className="tabs-bar">
+      {openTabs.map((file) => (
+        <div
+          key={file}
+          onClick={() => openFile(file)}
+          className={`tab ${activeFile === file ? "active" : ""}`}
+        >
+          <span className="tab-title">{file}</span>
+
+          <span
+            className="tab-close"
+            onClick={(e) => {
+              e.stopPropagation();
+              closeTab(file);
+            }}
+          >
+            ✕
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+import { useState, useRef, useEffect } from "react";
+import { useWorkspace } from "../context/WorkspaceContext";
+import "./fileExplorer.css";
+
+/* ---------------- INLINE CREATE ---------------- */
+
+function InlineCreate({ type, parentPath, onSubmit, onCancel }) {
+  const [value, setValue] = useState("");
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  return (
+    <div className="tree-row creating">
+      <div className="tree-left">
+        <span className="file-indent" />
+        <span className={`icon ${type === "file" ? "file-icon" : "folder-icon"}`} />
+
+        <input
+          ref={inputRef}
+          className="rename-input"
+          placeholder={type === "file" ? "newFile" : "newFolder"}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && value.trim()) {
+              onSubmit(value.trim());
+            }
+            if (e.key === "Escape") onCancel();
+          }}
+          onBlur={onCancel}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- TREE NODE ---------------- */
+
+function TreeNode({ node, path }) {
+  const [open, setOpen] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [tempName, setTempName] = useState(node.name);
+  const [creating, setCreating] = useState(null); // { type: "file" | "folder" }
+
+  const inputRef = useRef(null);
+
+  const {
+    openFile,
+    addFile,
+    addFolder,
+    renameNode,
+    deleteNode,
+  } = useWorkspace();
+
+  const currentPath = path === "root" ? node.name : `${path}/${node.name}`;
+
+  /* AUTO FOCUS RENAME */
+  useEffect(() => {
+    if (editing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [editing]);
+
+  const submitRename = () => {
+    if (tempName && tempName !== node.name) {
+      renameNode(currentPath, tempName);
+    }
+    setEditing(false);
+  };
+
+  const cancelRename = () => {
+    setTempName(node.name);
+    setEditing(false);
+  };
+
+  /* ---------- FOLDER ---------- */
+  if (node.type === "folder") {
+    return (
+      <div className="tree-node">
+        <div className="tree-row group">
+          <div
+            className="tree-left"
+            onClick={() => !editing && setOpen(!open)}
+          >
+            <span className="arrow">{open ? "▼" : "▶"}</span>
+            <span className="icon folder-icon" />
+
+            {editing ? (
+              <input
+                ref={inputRef}
+                className="rename-input"
+                value={tempName}
+                onChange={(e) => setTempName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") submitRename();
+                  if (e.key === "Escape") cancelRename();
+                }}
+                onBlur={cancelRename}
+              />
+            ) : (
+              <span className="name">{node.name}</span>
+            )}
+          </div>
+
+          {!editing && (
+            <div className="tree-actions">
+              <button title="New File" onClick={() => setCreating({ type: "file" })}>
+                ＋📄
+              </button>
+              <button title="New Folder" onClick={() => setCreating({ type: "folder" })}>
+                ＋📁
+              </button>
+              <button title="Rename" onClick={() => setEditing(true)}>✎</button>
+              <button title="Delete" onClick={() => deleteNode(currentPath)}>🗑</button>
+            </div>
+          )}
+        </div>
+
+        {open && (
+          <>
+            {creating && (
+              <InlineCreate
+                type={creating.type}
+                parentPath={currentPath}
+                onSubmit={(name) => {
+                  creating.type === "file"
+                    ? addFile(currentPath, name)
+                    : addFolder(currentPath, name);
+                  setCreating(null);
+                  setOpen(true);
+                }}
+                onCancel={() => setCreating(null)}
+              />
+            )}
+
+            {node.children?.map((child) => (
+              <TreeNode
+                key={child.name}
+                node={child}
+                path={currentPath}
+              />
+            ))}
+          </>
+        )}
+      </div>
+    );
+  }
+
+  /* ---------- FILE ---------- */
+  return (
+    <div className="tree-node file-node">
+      <div className="tree-row group">
+        <div
+          className="tree-left"
+          onClick={() => !editing && openFile(currentPath)}
+        >
+          <span className="file-indent" />
+          <span className="icon file-icon" />
+
+          {editing ? (
+            <input
+              ref={inputRef}
+              className="rename-input"
+              value={tempName}
+              onChange={(e) => setTempName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") submitRename();
+                if (e.key === "Escape") cancelRename();
+              }}
+              onBlur={cancelRename}
+            />
+          ) : (
+            <span className="name">{node.name}</span>
+          )}
+        </div>
+
+        {!editing && (
+          <div className="tree-actions">
+            <button title="Rename" onClick={() => setEditing(true)}>✎</button>
+            <button title="Delete" onClick={() => deleteNode(currentPath)}>🗑</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- FILE EXPLORER ---------------- */
+
+export default function FileExplorer() {
+  const { tree, addFile, addFolder } = useWorkspace();
+  const [rootCreate, setRootCreate] = useState(null); // file | folder
+
+  /* LISTEN FROM SIDEBAR BUTTONS */
+  useEffect(() => {
+    const file = () => setRootCreate("file");
+    const folder = () => setRootCreate("folder");
+
+    window.addEventListener("explorer:create-file", file);
+    window.addEventListener("explorer:create-folder", folder);
+
+    return () => {
+      window.removeEventListener("explorer:create-file", file);
+      window.removeEventListener("explorer:create-folder", folder);
+    };
+  }, []);
+
+  if (!tree || !Array.isArray(tree.children)) {
+    return <p className="explorer-info">Loading workspace…</p>;
+  }
+
+  return (
+    <div className="file-explorer">
+      {rootCreate && (
+        <InlineCreate
+          type={rootCreate}
+          parentPath="root"
+          onSubmit={(name) => {
+            rootCreate === "file"
+              ? addFile("root", name)
+              : addFolder("root", name);
+            setRootCreate(null);
+          }}
+          onCancel={() => setRootCreate(null)}
+        />
+      )}
+
+      {tree.children.map((node) => (
+        <TreeNode key={node.name} node={node} path="root" />
+      ))}
+    </div>
+  );
+}
+
+import "./livePreview.css";
+
+export default function LivePreview({ url }) {
+  if (!url) return null;
+
+  return (
+    <div className="preview-container">
+      <div className="preview-header">
+        <span>🌐 Live Preview</span>
+        <a href={url} target="_blank" rel="noreferrer">
+          Open in new tab
+        </a>
+      </div>
+
+      <iframe
+        src={url}
+        title="Live Preview"
+        sandbox="allow-scripts allow-same-origin allow-forms"
+      />
+    </div>
+  );
+}
+ 
+ import { useWorkspace } from "../context/WorkspaceContext";
+import "./runBar.css";
+
+export default function RunBar() {
+  const { activeFile, runCode, running } = useWorkspace();
+
+  return (
+    <div className="run-bar">
+      <button
+        className="run-btn"
+        onClick={runCode}
+        disabled={!activeFile || running}
+      >
+        ▶ Run
+      </button>
+    </div>
+  );
+}
+
+export default function ServerControls() {
+  const startServer = async (id, command, cwd) => {
+    await fetch("http://localhost:5000/api/process/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, command, cwd }),
+    });
+  };
+
+  const stopServer = async (id) => {
+    await fetch("http://localhost:5000/api/process/stop", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+  };
+
+  return (
+    <div style={{ padding: "8px", borderTop: "1px solid #333" }}>
+      <h4>Servers</h4>
+
+      <button
+        onClick={() =>
+          startServer(
+            "backend",
+            "npm run dev",
+            "workspace/default/my-mern-app/server"
+          )
+        }
+      >
+        ▶ Start Backend
+      </button>
+
+      <button onClick={() => stopServer("backend")}>⏹ Stop Backend</button>
+
+      <button
+        onClick={() =>
+          startServer(
+            "frontend",
+            "npm run dev",
+            "workspace/default/my-mern-app/client"
+          )
+        }
+      >
+        ▶ Start Frontend
+      </button>
+
+      <button onClick={() => stopServer("frontend")}>⏹ Stop Frontend</button>
+    </div>
+  );
+}
+
+import FileExplorer from "./FileExplorer";
+import "./sidebar.css";
+
+export default function Sidebar() {
+  const createFile = () => {
+    window.dispatchEvent(
+      new CustomEvent("explorer:create-file", {
+        detail: { parent: "root" },
+      })
+    );
+  };
+
+  const createFolder = () => {
+    window.dispatchEvent(
+      new CustomEvent("explorer:create-folder", {
+        detail: { parent: "root" },
+      })
+    );
+  };
+
+  return (
+    <aside className="sidebar">
+      {/* Explorer Header */}
+      <div className="sidebar-header">
+        <span className="sidebar-title">EXPLORER</span>
+
+        <div className="sidebar-actions">
+          <button onClick={createFile} title="New File">📄</button>
+          <button onClick={createFolder} title="New Folder">📁</button>
+        </div>
+      </div>
+
+      {/* File Tree */}
+      <div className="sidebar-tree">
+        <FileExplorer />
+      </div>
+    </aside>
+  );
+}
+ 
+ import { useEffect, useRef } from "react";
+import { Terminal } from "xterm";
+import { FitAddon } from "xterm-addon-fit";
+import "xterm/css/xterm.css";
+import "./terminalPanel.css";
+
+export default function TerminalPanel({ socket, terminalId }) {
+  const containerRef = useRef(null);
+  const termRef = useRef(null);
+
+  useEffect(() => {
+    if (!terminalId || !socket) return;
+
+    const term = new Terminal({
+      cursorBlink: true,
+      fontSize: 13,
+      fontFamily: "JetBrains Mono, monospace",
+      theme: {
+        background: "#1e1e1e",
+        foreground: "#d4d4d4",
+      },
+    });
+
+    const fitAddon = new FitAddon();
+    term.loadAddon(fitAddon);
+    term.open(containerRef.current);
+    fitAddon.fit();
+
+    termRef.current = term;
+
+    term.onData((data) => {
+      socket.send(
+        JSON.stringify({
+          type: "input",
+          terminalId,
+          data,
+        })
+      );
+    });
+
+    const handleMessage = (e) => {
+      const msg = JSON.parse(e.data);
+      if (msg.type === "output" && msg.terminalId === terminalId) {
+        term.write(msg.data);
+      }
+    };
+
+    socket.addEventListener("message", handleMessage);
+
+    return () => {
+      socket.removeEventListener("message", handleMessage);
+      term.dispose();
+    };
+  }, [terminalId, socket]);
+
+  return <div ref={containerRef} className="terminal-panel" />;
+}
+ 
+ import "./terminalTabs.css";
+
+export default function TerminalTabs({
+  terminals,
+  activeTerminal,
+  setActiveTerminal,
+  closeTerminal,
+}) {
+  return (
+    <div className="terminal-tabs">
+      {terminals.map((t, i) => (
+        <div
+          key={t.id}
+          className={`terminal-tab ${
+            activeTerminal === t.id ? "active" : ""
+          }`}
+          onClick={() => setActiveTerminal(t.id)}
+        >
+          Terminal {i + 1}
+          <span
+            className="close-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              closeTerminal(t.id);
+            }}
+          >
+            ✕
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+ 
+ import { useEffect, useState } from "react";
+import "./webPreview.css";
+
+export default function WebPreview({ file }) {
+  const [key, setKey] = useState(0);
+
+  useEffect(() => {
+    setKey((k) => k + 1); // 🔥 force iframe reload
+  }, [file]);
+
+  if (!file) return null;
+
+  return (
+    <div className="web-preview">
+      <div className="preview-header">PREVIEW</div>
+      <iframe
+        key={key}
+        src={`http://localhost:5000/preview/${file}`}
+        title="preview"
+      />
+    </div>
+  );
+}
+ 
+ import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+} from "react";
+
+const WorkspaceContext = createContext();
+
+const FILE_API = "http://localhost:5000/api/files";
+const EXEC_API = "http://localhost:5000/api/execute";
+const WS_URL = "ws://localhost:5000";
+
+export function WorkspaceProvider({ children }) {
+  /* ---------------- FILE STATE ---------------- */
+
+  const [tree, setTree] = useState({
+    name: "root",
+    type: "folder",
+    children: [],
+  });
+
+  const [openTabs, setOpenTabs] = useState([]);
+  const [activeFile, setActiveFile] = useState(null);
+  const [fileContents, setFileContents] = useState({});
+  const [previewUrl, setPreviewUrl] = useState(null);
+
+
+  /* ---------------- EXECUTION STATE ---------------- */
+
+  const [stdin, setStdin] = useState("");
+  const [running, setRunning] = useState(false);
+
+  /* ---------------- UI STATE ---------------- */
+
+  const [showInput, setShowInput] = useState(false);
+
+  /* ---------------- TERMINAL STATE ---------------- */
+
+  const [terminals, setTerminals] = useState([]);
+  const [activeTerminal, setActiveTerminal] = useState(null);
+  const socketRef = useRef(null);
+
+  /* ---------------- WEBSOCKET SETUP ---------------- */
+
+  useEffect(() => {
+    const socket = new WebSocket(WS_URL);
+    socketRef.current = socket;
+
+    socket.onopen = () => {
+      console.log("✅ Terminal WebSocket connected");
+    };
+
+  socket.onmessage = (e) => {
+  const msg = JSON.parse(e.data);
+
+  if (msg.type === "created") {
+    setTerminals((prev) => [...prev, { id: msg.terminalId }]);
+    setActiveTerminal(msg.terminalId);
+  }
+
+  if (msg.type === "preview") {
+    setPreviewUrl(`http://localhost:${msg.port}`);
+  }
+};
+
+
+    socket.onerror = (err) => {
+      console.error("❌ WebSocket error", err);
+    };
+
+    socket.onclose = () => {
+      console.warn("⚠️ WebSocket closed");
+    };
+
+    return () => socket.close();
+  }, []);
+
+  /* ---------------- SAFE WS SEND ---------------- */
+
+  const sendWS = (payload) => {
+    const socket = socketRef.current;
+    if (!socket || socket.readyState !== WebSocket.OPEN) return;
+    socket.send(JSON.stringify(payload));
+  };
+
+  /* ---------------- TERMINAL ACTIONS ---------------- */
+
+  const createTerminal = () => {
+    sendWS({ type: "create" });
+  };
+
+  const killTerminal = (id) => {
+    sendWS({ type: "kill", terminalId: id });
+    setTerminals((prev) => prev.filter((t) => t.id !== id));
+    if (activeTerminal === id) setActiveTerminal(null);
+  };
+
+  /* ---------------- LOAD WORKSPACE ---------------- */
+
+  useEffect(() => {
+    loadWorkspace();
+  }, []);
+
+  const loadWorkspace = async () => {
+    try {
+      const res = await fetch(`${FILE_API}/load`);
+      const data = await res.json();
+      setTree(data);
+    } catch (err) {
+      console.error("Failed to load workspace", err);
+    }
+  };
+
+  /* ---------------- INPUT DETECTION ---------------- */
+
+  const detectInputRequired = (content, file) => {
+    if (!content || !file) return false;
+
+    if (file.endsWith(".cpp") || file.endsWith(".c"))
+      return /cin\s*>>|scanf\s*\(/.test(content);
+
+    if (file.endsWith(".java"))
+      return /Scanner|nextInt|nextLine|nextDouble/.test(content);
+
+    if (file.endsWith(".py")) return /input\s*\(/.test(content);
+
+    return false;
+  };
+
+  /* ---------------- FILE & FOLDER ---------------- */
+
+  const addFile = async (parentPath, fileName) => {
+    const path =
+      parentPath === "root" ? fileName : `${parentPath}/${fileName}`;
+
+    await fetch(`${FILE_API}/file`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path }),
+    });
+
+    await loadWorkspace();
+    openFile(path);
+  };
+
+  const addFolder = async (parentPath, folderName) => {
+    const path =
+      parentPath === "root" ? folderName : `${parentPath}/${folderName}`;
+
+    await fetch(`${FILE_API}/folder`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path }),
+    });
+
+    await loadWorkspace();
+  };
+
+  /* ---------------- FILE OPEN ---------------- */
+
+  const openFile = async (path) => {
+    if (!openTabs.includes(path)) {
+      setOpenTabs((prev) => [...prev, path]);
+    }
+
+    const res = await fetch(
+      `${FILE_API}/read?path=${encodeURIComponent(path)}`
+    );
+    const data = await res.json();
+
+    setFileContents((prev) => ({ ...prev, [path]: data.content || "" }));
+    setActiveFile(path);
+    setShowInput(detectInputRequired(data.content, path));
+  };
+
+  /* ---------------- FILE SAVE ---------------- */
+
+  const updateContent = async (path, content) => {
+    setFileContents((prev) => ({ ...prev, [path]: content }));
+    setShowInput(detectInputRequired(content, path));
+
+    await fetch(`${FILE_API}/save`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path, content }),
+    });
+  };
+
+  /* ---------------- RENAME ---------------- */
+
+  const renameNode = async (path, newName) => {
+    const parts = path.split("/");
+    const newPath = [...parts.slice(0, -1), newName].join("/");
+
+    await fetch(`${FILE_API}/rename`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ oldPath: path, newPath }),
+    });
+
+    await loadWorkspace();
+
+    setFileContents((prev) => {
+      const updated = {};
+      for (const key in prev) {
+        updated[key === path ? newPath : key] = prev[key];
+      }
+      return updated;
+    });
+
+    setOpenTabs((tabs) => tabs.map((t) => (t === path ? newPath : t)));
+    if (activeFile === path) setActiveFile(newPath);
+  };
+
+  /* ---------------- DELETE ---------------- */
+
+  const deleteNode = async (path) => {
+    await fetch(`${FILE_API}/delete`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path }),
+    });
+
+    await loadWorkspace();
+
+    setOpenTabs((tabs) => tabs.filter((t) => !t.startsWith(path)));
+    setFileContents((prev) => {
+      const updated = {};
+      for (const key in prev) {
+        if (!key.startsWith(path)) updated[key] = prev[key];
+      }
+      return updated;
+    });
+
+    if (activeFile?.startsWith(path)) {
+      setActiveFile(null);
+      setShowInput(false);
+    }
+  };
+
+  /* ---------------- LANGUAGE ---------------- */
+
+  const detectLanguage = (file) => {
+    if (!file) return null;
+    if (file.endsWith(".cpp")) return "cpp";
+    if (file.endsWith(".c")) return "c";
+    if (file.endsWith(".java")) return "java";
+    if (file.endsWith(".py")) return "python";
+    if (file.endsWith(".js")) return "node";
+    return null;
+  };
+
+  /* ---------------- RUN CODE ---------------- */
+
+const runCode = () => {
+  if (!activeFile) return;
+
+  if (!activeTerminal) {
+    alert("Please open a terminal first");
+    return;
+  }
+
+  let command = "";
+
+  // PowerShell-compatible commands
+  if (activeFile.endsWith(".java")) {
+    const base = activeFile.replace(".java", "");
+    command = `javac ${activeFile}; java ${base}\r`;
+  } else if (activeFile.endsWith(".cpp")) {
+    command = `g++ ${activeFile} -o program; ./program\r`;
+  } else if (activeFile.endsWith(".c")) {
+    command = `gcc ${activeFile} -o program; ./program\r`;
+  } else if (activeFile.endsWith(".py")) {
+    command = `python ${activeFile}\r`;
+  } else if (activeFile.endsWith(".js")) {
+    command = `node ${activeFile}\r`;
+  } else {
+    return;
+  }
+
+  socketRef.current.send(
+    JSON.stringify({
+      type: "input",
+      terminalId: activeTerminal,
+      data: command,
+    })
+  );
+};
+
+
+
+
+  /* ---------------- PROVIDER ---------------- */
+
+  return (
+    <WorkspaceContext.Provider
+      value={{
+        tree,
+        openTabs,
+        activeFile,
+        fileContents,
+        stdin,
+        setStdin,
+        running,
+        showInput,
+        terminals,
+        activeTerminal,
+        setActiveTerminal,
+        createTerminal,
+        killTerminal,
+        socketRef,
+        previewUrl,
+        setPreviewUrl,
+        addFile,
+        addFolder,
+        openFile,
+        updateContent,
+        renameNode,
+        deleteNode,
+        closeTab: (path) =>
+          setOpenTabs((tabs) => tabs.filter((t) => t !== path)),
+        runCode,
+      }}
+    >
+      {children}
+    </WorkspaceContext.Provider>
+  );
+}
+
+export const useWorkspace = () => useContext(WorkspaceContext);
+
+import Sidebar from "../components/Sidebar";
+import EditorTabs from "../components/EditorTabs";
+import CodeEditor from "../components/CodeEditor";
+import RunBar from "../components/RunBar";
+import TerminalTabs from "../components/TerminalTabs";
+import TerminalPanel from "../components/TerminalPanel";
+import LivePreview from "../components/LivePreview";
+
+import { useWorkspace } from "../context/WorkspaceContext";
+import "./workspace.css";
+
+export default function Workspace() {
+  const {
+    activeFile,
+
+    // terminal state
+    terminals,
+    activeTerminal,
+    setActiveTerminal,
+    createTerminal,
+    killTerminal,
+    socketRef,
+
+    // preview
+    previewUrl,
+  } = useWorkspace();
+
+  return (
+    <div className="workspace">
+      {/* LEFT SIDEBAR */}
+      <Sidebar />
+
+      {/* MAIN AREA */}
+      <div className="workspace-main">
+        {/* FILE TABS */}
+        <EditorTabs />
+
+        {/* RUN BAR */}
+        <RunBar />
+
+        {/* CODE EDITOR */}
+        <div className="editor-area">
+          <CodeEditor />
+        </div>
+
+        {/* LIVE BROWSER PREVIEW (MERN / MEAN / VITE / ANGULAR) */}
+        <LivePreview url={previewUrl} />
+
+        {/* TERMINAL CONTROLS */}
+        <div className="terminal-section">
+          <div className="terminal-actions">
+            <button onClick={createTerminal}>➕ New Terminal</button>
+          </div>
+
+          <TerminalTabs
+            terminals={terminals}
+            activeTerminal={activeTerminal}
+            setActiveTerminal={setActiveTerminal}
+            closeTerminal={killTerminal}
+          />
+
+          {activeTerminal && (
+            <TerminalPanel
+              socket={socketRef.current}
+              terminalId={activeTerminal}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+ 
+ import Workspace from "./pages/Workspace"
+
+function App() {
+  return <Workspace/>; 
+}
+
+export default App;
+ 
+
+ this is the frontend of the project.

@@ -1,0 +1,110 @@
+.file-explorer {
+  font-family: "Segoe UI", sans-serif;
+  font-size: 13px;
+  color: #d4d4d4;
+}
+
+/* INFO TEXT */
+.explorer-info {
+  padding: 8px;
+  font-size: 12px;
+  color: #9da0a6;
+}
+
+/* TREE */
+.tree-node {
+  margin-left: 8px;
+}
+
+.file-node {
+  margin-left: 18px;
+}
+
+/* ROW */
+.tree-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.tree-row:hover {
+  background: #2a2d2e;
+}
+
+/* LEFT SIDE */
+.tree-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.arrow {
+  width: 12px;
+  font-size: 10px;
+  color: #c5c5c5;
+}
+
+/* ICONS */
+.icon {
+  width: 14px;
+  height: 14px;
+}
+
+.folder-icon {
+  background: linear-gradient(#c09553, #b5894a);
+  border-radius: 2px;
+}
+
+.file-icon {
+  background: #519aba;
+  border-radius: 2px;
+}
+
+.file-indent {
+  width: 12px;
+}
+
+/* NAME */
+.name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ACTIONS */
+.tree-actions {
+  display: none;
+  gap: 6px;
+}
+
+.group:hover .tree-actions {
+  display: flex;
+}
+
+.tree-actions button {
+  background: none;
+  border: none;
+  color: #9da0a6;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tree-actions button:hover {
+  color: #ffffff;
+}
+
+/* RENAME INPUT */
+.rename-input {
+  background: #1e1e1e;
+  border: 1px solid #007acc;
+  color: #ffffff;
+  font-size: 13px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  outline: none;
+  width: 140px;
+}
