@@ -1,35 +1,28 @@
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
 
-/* ---------------- ES MODULE DIRNAME FIX ---------------- */
+const WORKSPACES_ROOT = path.join(process.cwd(), "workspaces");
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+/* ---------------- ENSURE WORKSPACE ---------------- */
 
-/* ---------------- WORKSPACE ROOT ---------------- */
+export function ensureWorkspace(userId, workspaceId) {
+  const wsPath = path.join(WORKSPACES_ROOT, userId, workspaceId);
 
-const WORKSPACE_ROOT = path.join(__dirname, "..", "workspace", "default");
+  if (!fs.existsSync(wsPath)) {
+    fs.mkdirSync(wsPath, { recursive: true });
+  }
 
-/* ---------------- ENSURE ROOT EXISTS (ONLY ONCE) ---------------- */
-
-if (!fs.existsSync(WORKSPACE_ROOT)) {
-  fs.mkdirSync(WORKSPACE_ROOT, { recursive: true });
+  return wsPath;
 }
 
 /* ---------------- READ WORKSPACE TREE ---------------- */
 
-export function readWorkspace(dir = WORKSPACE_ROOT) {
-  if (!fs.existsSync(dir)) {
-    return {
-      name: "root",
-      type: "folder",
-      children: [],
-    };
-  }
+export function readWorkspace(userId, workspaceId, dir = null) {
+  const root = ensureWorkspace(userId, workspaceId);
+  const current = dir || root;
 
-  const stats = fs.statSync(dir);
-  const name = dir === WORKSPACE_ROOT ? "root" : path.basename(dir);
+  const stats = fs.statSync(current);
+  const name = current === root ? workspaceId : path.basename(current);
 
   if (stats.isFile()) {
     return { name, type: "file" };
@@ -38,32 +31,27 @@ export function readWorkspace(dir = WORKSPACE_ROOT) {
   return {
     name,
     type: "folder",
-    children: fs.readdirSync(dir).map((child) =>
-      readWorkspace(path.join(dir, child))
+    children: fs.readdirSync(current).map((child) =>
+      readWorkspace(userId, workspaceId, path.join(current, child))
     ),
   };
 }
 
 /* ---------------- CREATE FILE ---------------- */
 
-export function createFile(relativePath) {
-  const fullPath = path.join(WORKSPACE_ROOT, relativePath);
+export function createFile(userId, workspaceId, relativePath) {
+  const wsPath = ensureWorkspace(userId, workspaceId);
+  const fullPath = path.join(wsPath, relativePath);
 
-  // ✅ create parent folders ONLY
-  const parentDir = path.dirname(fullPath);
-  if (!fs.existsSync(parentDir)) {
-    fs.mkdirSync(parentDir, { recursive: true });
-  }
-
-  if (!fs.existsSync(fullPath)) {
-    fs.writeFileSync(fullPath, "");
-  }
+  fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+  if (!fs.existsSync(fullPath)) fs.writeFileSync(fullPath, "");
 }
 
 /* ---------------- CREATE FOLDER ---------------- */
 
-export function createFolder(relativePath) {
-  const fullPath = path.join(WORKSPACE_ROOT, relativePath);
+export function createFolder(userId, workspaceId, relativePath) {
+  const wsPath = ensureWorkspace(userId, workspaceId);
+  const fullPath = path.join(wsPath, relativePath);
 
   if (!fs.existsSync(fullPath)) {
     fs.mkdirSync(fullPath, { recursive: true });
@@ -72,40 +60,42 @@ export function createFolder(relativePath) {
 
 /* ---------------- SAVE FILE ---------------- */
 
-export function saveFile(relativePath, content) {
-  const fullPath = path.join(WORKSPACE_ROOT, relativePath);
+export function saveFile(userId, workspaceId, relativePath, content) {
+  const wsPath = ensureWorkspace(userId, workspaceId);
+  const fullPath = path.join(wsPath, relativePath);
 
-  const parentDir = path.dirname(fullPath);
-  if (!fs.existsSync(parentDir)) {
-    fs.mkdirSync(parentDir, { recursive: true });
-  }
-
+  fs.mkdirSync(path.dirname(fullPath), { recursive: true });
   fs.writeFileSync(fullPath, content);
 }
 
-/* ---------------- DELETE NODE ---------------- */
+/* ---------------- READ FILE ---------------- */
 
-export function deleteNode(relativePath) {
-  const fullPath = path.join(WORKSPACE_ROOT, relativePath);
+export function readFile(userId, workspaceId, relativePath) {
+  const wsPath = ensureWorkspace(userId, workspaceId);
+  const fullPath = path.join(wsPath, relativePath);
+
+  if (!fs.existsSync(fullPath)) return "";
+  return fs.readFileSync(fullPath, "utf-8");
+}
+
+/* ---------------- DELETE ---------------- */
+
+export function deleteNode(userId, workspaceId, relativePath) {
+  const wsPath = ensureWorkspace(userId, workspaceId);
+  const fullPath = path.join(wsPath, relativePath);
 
   if (fs.existsSync(fullPath)) {
     fs.rmSync(fullPath, { recursive: true, force: true });
   }
 }
 
-/* ---------------- RENAME NODE ---------------- */
+/* ---------------- RENAME ---------------- */
 
-export function renameNode(oldPath, newPath) {
+export function renameNode(userId, workspaceId, oldPath, newPath) {
+  const wsPath = ensureWorkspace(userId, workspaceId);
+
   fs.renameSync(
-    path.join(WORKSPACE_ROOT, oldPath),
-    path.join(WORKSPACE_ROOT, newPath)
+    path.join(wsPath, oldPath),
+    path.join(wsPath, newPath)
   );
-}
-
-export function readFile(relativePath) {
-  const fullPath = path.join(WORKSPACE_ROOT, relativePath);
-
-  if (!fs.existsSync(fullPath)) return "";
-
-  return fs.readFileSync(fullPath, "utf-8");
 }

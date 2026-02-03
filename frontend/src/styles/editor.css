@@ -1,0 +1,11 @@
+.editor-empty {
+  padding: 40px;
+  color: #888;
+  text-align: center;
+}
+
+.editor-area {
+  flex: 1;
+  min-height: 0;
+  background: #1e1e1e;
+}

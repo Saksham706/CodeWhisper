@@ -1,0 +1,58 @@
+/* ========== SIDEBAR ========== */
+
+.sidebar {
+  width: 260px;
+  background-color: #252526;
+  border-right: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+}
+
+/* HEADER */
+
+.sidebar-header {
+  height: 36px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #cccccc;
+  border-bottom: 1px solid #333;
+}
+
+.sidebar-title {
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  opacity: 0.8;
+}
+
+/* ACTION BUTTONS */
+
+.sidebar-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.sidebar-actions button {
+  background: none;
+  border: none;
+  color: #c5c5c5;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.sidebar-actions button:hover {
+  background: #37373d;
+  color: #ffffff;
+}
+
+/* FILE TREE */
+
+.sidebar-tree {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 4px;
+}

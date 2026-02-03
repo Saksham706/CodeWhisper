@@ -1,71 +1,43 @@
 import * as fileService from "../services/fileService.js";
 
 export const loadWorkspace = (req, res) => {
-  try {
-    res.json(fileService.readWorkspace());
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to load workspace" });
-  }
+  const { userId, workspaceId } = req.query;
+  const tree = fileService.readWorkspace(userId, workspaceId);
+  res.json(tree);
 };
 
 export const createFile = (req, res) => {
-  try {
-    fileService.createFile(req.body.path);
-    res.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Create file failed" });
-  }
+  const { userId, workspaceId, path } = req.body;
+  fileService.createFile(userId, workspaceId, path);
+  res.json({ success: true });
 };
 
 export const createFolder = (req, res) => {
-  try {
-    fileService.createFolder(req.body.path);
-    res.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Create folder failed" });
-  }
+  const { userId, workspaceId, path } = req.body;
+  fileService.createFolder(userId, workspaceId, path);
+  res.json({ success: true });
 };
 
 export const saveFile = (req, res) => {
-  try {
-    fileService.saveFile(req.body.path, req.body.content);
-    res.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Save failed" });
-  }
-};
-
-export const deleteNode = (req, res) => {
-  try {
-    fileService.deleteNode(req.body.path);
-    res.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Delete failed" });
-  }
-};
-
-export const renameNode = (req, res) => {
-  try {
-    fileService.renameNode(req.body.oldPath, req.body.newPath);
-    res.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Rename failed" });
-  }
+  const { userId, workspaceId, path, content } = req.body;
+  fileService.saveFile(userId, workspaceId, path, content);
+  res.json({ success: true });
 };
 
 export const readFile = (req, res) => {
-  try {
-    const { path } = req.query;
-    const content = fileService.readFile(path);
-    res.json({ content });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Read file failed" });
-  }
+  const { userId, workspaceId, path } = req.query;
+  const content = fileService.readFile(userId, workspaceId, path);
+  res.json({ content });
+};
+
+export const deleteNode = (req, res) => {
+  const { userId, workspaceId, path } = req.body;
+  fileService.deleteNode(userId, workspaceId, path);
+  res.json({ success: true });
+};
+
+export const renameNode = (req, res) => {
+  const { userId, workspaceId, oldPath, newPath } = req.body;
+  fileService.renameNode(userId, workspaceId, oldPath, newPath);
+  res.json({ success: true });
 };

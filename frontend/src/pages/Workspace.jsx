@@ -1,73 +1,67 @@
-import Sidebar from "../components/Sidebar";
-import EditorTabs from "../components/EditorTabs";
-import CodeEditor from "../components/CodeEditor";
-import RunBar from "../components/RunBar";
-import TerminalTabs from "../components/TerminalTabs";
-import TerminalPanel from "../components/TerminalPanel";
-import LivePreview from "../components/LivePreview";
+import Sidebar from "../components/layout/Sidebar";
+import Navbar from "../components/layout/Navbar";
+
+import EditorTabs from "../components/editor/EditorTabs";
+import CodeEditor from "../components/editor/CodeEditor";
+import RunBar from "../components/editor/RunBar";
+
+import TerminalTabs from "../components/terminal/TerminalTabs";
+import TerminalPanel from "../components/terminal/TerminalPanel";
+
+import LivePreview from "../components/preview/LivePreview";
 
 import { useWorkspace } from "../context/WorkspaceContext";
-import "./workspace.css";
+
+import "../styles/layout.css";
 
 export default function Workspace() {
   const {
-    activeFile,
-
-    // terminal state
     terminals,
     activeTerminal,
     setActiveTerminal,
-    createTerminal,
     killTerminal,
-    socketRef,
-
-    // preview
     previewUrl,
   } = useWorkspace();
 
   return (
-    <div className="workspace">
-      {/* LEFT SIDEBAR */}
-      <Sidebar />
+    <>
+      <Navbar />
 
-      {/* MAIN AREA */}
-      <div className="workspace-main">
-        {/* FILE TABS */}
-        <EditorTabs />
+      <div className="workspace">
+        {/* LEFT SIDEBAR */}
+        <Sidebar />
 
-        {/* RUN BAR */}
-        <RunBar />
+        {/* MAIN AREA */}
+        <div className="workspace-main">
+          {/* FILE TABS */}
+          <EditorTabs />
 
-        {/* CODE EDITOR */}
-        <div className="editor-area">
-          <CodeEditor />
-        </div>
+          {/* RUN BAR */}
+          <RunBar />
 
-        {/* LIVE BROWSER PREVIEW (MERN / MEAN / VITE / ANGULAR) */}
-        <LivePreview url={previewUrl} />
-
-        {/* TERMINAL CONTROLS */}
-        <div className="terminal-section">
-          <div className="terminal-actions">
-            <button onClick={() => createTerminal()}>➕ New Terminal</button>
-
+          {/* CODE EDITOR */}
+          <div className="editor-area">
+            <CodeEditor />
           </div>
 
-          <TerminalTabs
-            terminals={terminals}
-            activeTerminal={activeTerminal}
-            setActiveTerminal={setActiveTerminal}
-            closeTerminal={killTerminal}
-          />
+          {/* LIVE PREVIEW (HTML / FRONTEND PROJECTS) */}
+          <LivePreview url={previewUrl} />
 
-          {activeTerminal && (
-            <TerminalPanel
-              socket={socketRef.current}
-              terminalId={activeTerminal}
+          {/* TERMINAL */}
+          <div className="terminal-section">
+            <TerminalTabs
+              terminals={terminals}
+              activeTerminal={activeTerminal}
+              setActiveTerminal={setActiveTerminal}
+              closeTerminal={killTerminal}
             />
-          )}
+
+            {activeTerminal && (
+              <TerminalPanel terminalId={activeTerminal} />
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

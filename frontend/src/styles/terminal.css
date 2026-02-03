@@ -1,0 +1,9 @@
+.terminal-section {
+  height: 240px;
+  background: #1e1e1e;
+  border-top: 1px solid #333;
+}
+
+.terminal-panel {
+  height: 100%;
+}

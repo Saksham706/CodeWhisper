@@ -15,7 +15,7 @@ router.get("/load", loadWorkspace);
 router.post("/file", createFile);
 router.post("/folder", createFolder);
 router.put("/save", saveFile);
-router.delete("/delete", deleteNode);
+router.post("/delete", deleteNode);
 router.put("/rename", renameNode);
 router.get("/read", readFile);
 
