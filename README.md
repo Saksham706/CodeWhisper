@@ -1,8 +1,3 @@
-diff --git a/README.md b/README.md
-index f5125474481528bb672b2cb4ccf0a59da5ad3f72..455b632bceebb0b57fcb22173439f652bae966b5 100644
---- a/README.md
-+++ b/README.md
-@@ -1,2 +1,76 @@
 -# NeuroCode.AI
 -To create an AI-powered, voice-driven coding platform that allows complete hands-free programming with real-time code execution and project management.
 +# NeuroCode.AI 🤖🎙️
@@ -81,3 +76,6 @@ index f5125474481528bb672b2cb4ccf0a59da5ad3f72..455b632bceebb0b57fcb22173439f652
 +## License 📄
 +
 +[MIT](LICENSE)
+ 
+EOF
+)
