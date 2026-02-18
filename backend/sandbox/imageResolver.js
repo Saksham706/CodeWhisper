@@ -1,4 +1,4 @@
 
 export function getImageForWorkspace() {
-  return "neurocode/universal-dev:latest";
+  return "CodeWhisper/universal-dev:latest";
 }

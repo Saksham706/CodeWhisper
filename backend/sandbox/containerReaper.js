@@ -1,9 +1,9 @@
-import {
-  getAllContainers,
-} from "./containerRegistry.js";
+import { getAllContainers } from "./containerRegistry.js";
 import { stopAndRemoveContainer } from "./containerManager.js";
 
-const IDLE_TIMEOUT = 15 * 60 * 1000; // 15 minutes
+const IDLE_TIMEOUT =
+  Number(process.env.CONTAINER_IDLE_TIMEOUT) ||
+  15 * 60 * 1000;
 
 export function startContainerReaper() {
   setInterval(async () => {
@@ -15,5 +15,5 @@ export function startContainerReaper() {
         await stopAndRemoveContainer(workspaceId);
       }
     }
-  }, 60 * 1000); // check every minute
+  }, 60 * 1000);
 }

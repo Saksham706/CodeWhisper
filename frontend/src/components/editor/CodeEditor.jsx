@@ -1,10 +1,12 @@
 import Editor from "@monaco-editor/react";
 import { useWorkspace } from "../../context/WorkspaceContext";
 import { LANGUAGE_META } from "../../config/languages";
+import { useRef } from "react";
 import "../../styles/editor.css";
 
 export default function CodeEditor() {
   const { activeFile, fileContents, updateContent } = useWorkspace();
+  const editorRef = useRef(null);
 
   if (!activeFile) {
     return <div className="editor-empty">Open a file to start coding</div>;
@@ -15,16 +17,22 @@ export default function CodeEditor() {
 
   return (
     <Editor
+      key={activeFile}   // 🔥 important
       theme="vs-dark"
       language={meta.monaco || "plaintext"}
       value={fileContents[activeFile] || ""}
-      onChange={(v) => updateContent(activeFile, v || "")}
+      height="100%"
       options={{
         fontSize: 14,
         minimap: { enabled: false },
         automaticLayout: true,
       }}
-      height="100%"
+      onMount={(editor) => {
+        editorRef.current = editor;
+      }}
+      onChange={(value) => {
+        updateContent(activeFile, value || "");
+      }}
     />
   );
 }

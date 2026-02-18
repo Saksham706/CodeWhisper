@@ -1,14 +1,15 @@
 import "../../styles/preview.css";
 
-export default function LivePreview({ url }) {
-  if (!url) return null;
+export default function LivePreview({ url, activeFile }) {
+  if (!url || !activeFile?.endsWith(".html")) return null;
 
   return (
     <iframe
+      key={url} // 🔥 forces refresh when url changes
       src={url}
-      title="preview"
       className="live-preview"
       sandbox="allow-scripts allow-same-origin"
+      title="Live Preview"
     />
   );
 }

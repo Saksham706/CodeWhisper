@@ -1,0 +1,298 @@
+:root {
+  --green: #00ff99;
+  --bg: #0f1115;
+  --panel: rgba(28, 32, 36, 0.95);
+  --border: rgba(0, 255, 153, 0.25);
+}
+
+/* =========================
+   ROOT
+========================= */
+
+.landing {
+  min-height: 100vh;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 255, 153, 0.03) 0px,
+      rgba(0, 255, 153, 0.03) 1px,
+      transparent 1px,
+      transparent 40px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(0, 255, 153, 0.03) 0px,
+      rgba(0, 255, 153, 0.03) 1px,
+      transparent 1px,
+      transparent 40px
+    ),
+    radial-gradient(circle at top, rgba(0, 255, 153, 0.12), transparent 45%),
+    var(--bg);
+
+  color: #e6f7f1;
+  font-family: system-ui, sans-serif;
+}
+
+/* =========================
+   NAVBAR
+========================= */
+
+.landing-nav {
+  padding: 22px 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.landing-nav img {
+  width: 150px;
+  filter: drop-shadow(0 0 16px rgba(0, 255, 153, 0.6));
+}
+
+/* =========================
+   BUTTON
+========================= */
+
+.primary-btn {
+  background: linear-gradient(135deg, var(--green), #00c878);
+  border: none;
+  padding: 12px 28px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #022318;
+}
+
+.primary-btn.large {
+  padding: 14px 36px;
+}
+
+.primary-btn:hover {
+  box-shadow: 0 0 32px rgba(0, 255, 153, 0.5);
+}
+
+/* =========================
+   HERO
+========================= */
+
+.hero {
+  max-width: 900px;
+  margin: 90px auto 80px;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 52px;
+  line-height: 1.1;
+}
+
+.hero h1 span {
+  color: var(--green);
+}
+
+.hero p {
+  max-width: 720px;
+  margin: 20px auto 36px;
+  opacity: 0.85;
+  font-size: 18px;
+}
+
+/* =========================
+   STATS
+========================= */
+
+.stats {
+  max-width: 1000px;
+  margin: 0 auto 100px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+}
+
+.stat {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 26px;
+  text-align: center;
+}
+
+.stat h3 {
+  color: var(--green);
+  font-size: 30px;
+}
+
+/* =========================
+   VISION
+========================= */
+
+.vision {
+  max-width: 800px;
+  margin: 0 auto 100px;
+  text-align: center;
+}
+
+.vision h2 {
+  font-size: 34px;
+}
+
+.vision p {
+  opacity: 0.85;
+  line-height: 1.6;
+}
+
+/* =========================
+   USE CASES
+========================= */
+
+.use-cases {
+  padding-bottom: 110px;
+  text-align: center;
+}
+
+.use-grid {
+  max-width: 1100px;
+  margin: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 28px;
+}
+
+.use-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 30px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.use-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 0 36px rgba(0, 255, 153, 0.35);
+}
+
+/* =========================
+   DIFFERENCE
+========================= */
+
+.difference {
+  max-width: 1100px;
+  margin: 0 auto 120px;
+  text-align: center;
+}
+
+.difference-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 28px;
+}
+
+.difference-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 32px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.difference-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 0 40px rgba(0, 255, 153, 0.35);
+}
+
+/* =========================
+   FINAL CTA – CLEAN & PREMIUM
+========================= */
+
+.final-cta {
+  padding: 140px 20px 160px;
+  display: flex;
+  justify-content: center;
+  background:
+    radial-gradient(circle at center, rgba(0, 255, 153, 0.08), transparent 55%),
+    transparent;
+}
+
+.final-cta-inner {
+  max-width: 760px;
+  text-align: center;
+}
+
+/* Eyebrow */
+
+.final-eyebrow {
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #7dffd0;
+  opacity: 0.8;
+  margin-bottom: 18px;
+}
+
+/* Title */
+
+.final-title {
+  font-size: 44px;
+  line-height: 1.15;
+  margin-bottom: 20px;
+  font-weight: 700;
+  color: #eafff6;
+}
+
+.final-title span {
+  color: #00ff99;
+}
+
+/* Subtitle */
+
+.final-subtitle {
+  font-size: 17px;
+  line-height: 1.7;
+  max-width: 620px;
+  margin: 0 auto 40px;
+  opacity: 0.85;
+  color: #cfeee2;
+}
+
+/* Actions */
+
+.final-actions {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 26px;
+}
+
+.final-primary {
+  background: linear-gradient(135deg, #00ff99, #00c878);
+  color: #022318;
+  border: none;
+  padding: 14px 42px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.final-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 40px rgba(0, 255, 153, 0.45);
+}
+
+/* Trust line */
+
+.final-trust {
+  font-size: 13px;
+  opacity: 0.6;
+  letter-spacing: 0.4px;
+}
+
+/* =========================
+   FOOTER
+========================= */
+
+.footer {
+  padding: 32px;
+  text-align: center;
+  opacity: 0.55;
+}

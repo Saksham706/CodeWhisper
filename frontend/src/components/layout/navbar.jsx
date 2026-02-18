@@ -1,53 +1,65 @@
 import { useState, useRef, useEffect } from "react";
-import "../../styles/navbar.css";
-
+import { useNavigate, useLocation } from "react-router-dom";
 import {
-  FiFileText,
+  FiFolder,
   FiTerminal,
   FiMoreVertical,
-  FiSettings,
-  FiUser,
-  FiFolder,
+  FiLogOut,
+  FiRefreshCcw,
+  FiHome,
 } from "react-icons/fi";
 import { FaRobot } from "react-icons/fa";
+
 import { useWorkspace } from "../../context/WorkspaceContext";
+import { useAuth } from "../../context/AuthContext";
+import "../../styles/navbar.css";
 
 export default function Navbar() {
-  const { openNewTerminal } = useWorkspace();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { openNewTerminal, terminals, killTerminal } = useWorkspace();
+  const { logout } = useAuth();
+
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
 
-  /* CLOSE DROPDOWN ON OUTSIDE CLICK */
   useEffect(() => {
-    const handleClickOutside = (e) => {
+    const handler = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
         setOpen(false);
       }
     };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  const closeAllTerminals = () => {
+    terminals.forEach((t) => killTerminal(t.id));
+    setOpen(false);
+  };
+
   return (
-    <div className="navbar">
+    <header className="navbar">
       {/* LEFT */}
-      <div className="navbar-left">
-        <img src="/Nlogo.png" alt="NeuroCode Logo" className="logo-img" />
+      <div
+        className="navbar-left"
+        onClick={() => navigate("/dashboard")}
+      >
+        <img src="/icon.png" alt="CodeWhisper" className="logo-img" />
       </div>
 
       {/* CENTER */}
-      <div className="navbar-center">
-        <div className="nav-tab">
-          <FiFileText />
+      <nav className="navbar-center">
+        <div
+          className={`nav-tab ${
+            location.pathname === "/dashboard" ? "active" : ""
+          }`}
+          onClick={() => navigate("/dashboard")}
+        >
+          <FiFolder />
           <span>Files</span>
         </div>
 
-        <div className="nav-tab">
-          <FiFolder />
-          <span>Folder</span>
-        </div>
         <div className="nav-tab" onClick={openNewTerminal}>
           <FiTerminal />
           <span>Terminal</span>
@@ -55,29 +67,58 @@ export default function Navbar() {
 
         <div className="nav-tab ai-tab">
           <FaRobot />
-          <span>AI Assistant</span>
+          <span>AI</span>
         </div>
-      </div>
+      </nav>
 
       {/* RIGHT */}
       <div className="navbar-right" ref={menuRef}>
-        <div className="more-btn" onClick={() => setOpen(!open)}>
+        <button
+          className="more-btn"
+          onClick={() => setOpen((o) => !o)}
+          aria-label="More options"
+        >
           <FiMoreVertical />
-        </div>
+        </button>
 
         {open && (
           <div className="dropdown">
-            <div className="dropdown-item">
-              <FiSettings />
-              <span>Settings</span>
+            <div className="dropdown-item" onClick={openNewTerminal}>
+              <FiTerminal /> <span>New Terminal</span>
             </div>
-            <div className="dropdown-item">
-              <FiUser />
-              <span>Account</span>
+
+            <div className="dropdown-item" onClick={closeAllTerminals}>
+              <FiTerminal /> <span>Close All Terminals</span>
+            </div>
+
+            <div
+              className="dropdown-item"
+              onClick={() => window.location.reload()}
+            >
+              <FiRefreshCcw /> <span>Reload Workspace</span>
+            </div>
+
+            <div
+              className="dropdown-item"
+              onClick={() => navigate("/dashboard")}
+            >
+              <FiHome /> <span>Dashboard</span>
+            </div>
+
+            <div className="dropdown-separator" />
+
+            <div
+              className="dropdown-item danger"
+              onClick={() => {
+                logout();
+                navigate("/");
+              }}
+            >
+              <FiLogOut /> <span>Logout</span>
             </div>
           </div>
         )}
       </div>
-    </div>
+    </header>
   );
 }

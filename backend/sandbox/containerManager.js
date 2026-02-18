@@ -1,4 +1,5 @@
 import Docker from "dockerode";
+import path from "path";
 import { getImageForWorkspace } from "./imageResolver.js";
 import {
   registerContainer,
@@ -9,10 +10,13 @@ import {
 
 const docker = new Docker();
 
-export async function getOrCreateContainer({ workspaceId, workspacePath }) {
-  const existing = getContainerEntry(workspaceId);
+export async function getOrCreateContainer({
+  workspaceKey,
+  workspacePath,
+}) {
+  const existing = getContainerEntry(workspaceKey);
   if (existing) {
-    touchContainer(workspaceId);
+    touchContainer(workspaceKey);
     return existing.container;
   }
 
@@ -22,7 +26,6 @@ export async function getOrCreateContainer({ workspaceId, workspacePath }) {
     Image: image,
     Tty: true,
     OpenStdin: true,
-    Cmd: ["bash"],
     WorkingDir: "/workspace",
     HostConfig: {
       Binds: [`${workspacePath}:/workspace`],
@@ -33,17 +36,23 @@ export async function getOrCreateContainer({ workspaceId, workspacePath }) {
   });
 
   await container.start();
-  registerContainer(workspaceId, container);
+  registerContainer(workspaceKey, container);
 
   return container;
 }
+
 
 export async function stopAndRemoveContainer(workspaceId) {
   const entry = getContainerEntry(workspaceId);
   if (!entry) return;
 
-  try { await entry.container.stop({ t: 5 }); } catch {}
-  try { await entry.container.remove({ force: true }); } catch {}
+  try {
+    await entry.container.stop({ t: 5 });
+  } catch {}
+
+  try {
+    await entry.container.remove({ force: true });
+  } catch {}
 
   removeContainer(workspaceId);
 }

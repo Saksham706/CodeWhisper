@@ -3,99 +3,91 @@ import path from "path";
 
 const WORKSPACES_ROOT = path.join(process.cwd(), "workspaces");
 
-/* ---------------- ENSURE WORKSPACE ---------------- */
+/* ================= HELPERS ================= */
+
+function safeJoin(base, target) {
+  const targetPath = path.resolve(base, target);
+  if (!targetPath.startsWith(base)) {
+    throw new Error("Invalid path");
+  }
+  return targetPath;
+}
 
 export function ensureWorkspace(userId, workspaceId) {
   const wsPath = path.join(WORKSPACES_ROOT, userId, workspaceId);
-
   if (!fs.existsSync(wsPath)) {
     fs.mkdirSync(wsPath, { recursive: true });
   }
-
   return wsPath;
 }
 
-/* ---------------- READ WORKSPACE TREE ---------------- */
-
-export function readWorkspace(userId, workspaceId, dir = null) {
-  const root = ensureWorkspace(userId, workspaceId);
-  const current = dir || root;
-
-  const stats = fs.statSync(current);
-  const name = current === root ? workspaceId : path.basename(current);
-
-  if (stats.isFile()) {
-    return { name, type: "file" };
-  }
-
-  return {
-    name,
-    type: "folder",
-    children: fs.readdirSync(current).map((child) =>
-      readWorkspace(userId, workspaceId, path.join(current, child))
-    ),
-  };
-}
-
-/* ---------------- CREATE FILE ---------------- */
+/* ================= CREATE ================= */
 
 export function createFile(userId, workspaceId, relativePath) {
   const wsPath = ensureWorkspace(userId, workspaceId);
-  const fullPath = path.join(wsPath, relativePath);
+  const fullPath = safeJoin(wsPath, relativePath);
 
   fs.mkdirSync(path.dirname(fullPath), { recursive: true });
   if (!fs.existsSync(fullPath)) fs.writeFileSync(fullPath, "");
 }
 
-/* ---------------- CREATE FOLDER ---------------- */
-
 export function createFolder(userId, workspaceId, relativePath) {
   const wsPath = ensureWorkspace(userId, workspaceId);
-  const fullPath = path.join(wsPath, relativePath);
+  const fullPath = safeJoin(wsPath, relativePath);
 
-  if (!fs.existsSync(fullPath)) {
-    fs.mkdirSync(fullPath, { recursive: true });
-  }
+  fs.mkdirSync(fullPath, { recursive: true });
 }
 
-/* ---------------- SAVE FILE ---------------- */
+/* ================= READ ================= */
+
+export function readFile(userId, workspaceId, relativePath) {
+  const wsPath = ensureWorkspace(userId, workspaceId);
+  const fullPath = safeJoin(wsPath, relativePath);
+
+  return fs.existsSync(fullPath)
+    ? fs.readFileSync(fullPath, "utf-8")
+    : "";
+}
+
+/* ================= SAVE ================= */
 
 export function saveFile(userId, workspaceId, relativePath, content) {
   const wsPath = ensureWorkspace(userId, workspaceId);
-  const fullPath = path.join(wsPath, relativePath);
+  const fullPath = safeJoin(wsPath, relativePath);
 
   fs.mkdirSync(path.dirname(fullPath), { recursive: true });
   fs.writeFileSync(fullPath, content);
 }
 
-/* ---------------- READ FILE ---------------- */
+/* ================= RENAME ================= */
 
-export function readFile(userId, workspaceId, relativePath) {
+export function renameNode(userId, workspaceId, oldPath, newPath) {
   const wsPath = ensureWorkspace(userId, workspaceId);
-  const fullPath = path.join(wsPath, relativePath);
 
-  if (!fs.existsSync(fullPath)) return "";
-  return fs.readFileSync(fullPath, "utf-8");
+  const from = safeJoin(wsPath, oldPath);
+  const to = safeJoin(wsPath, newPath);
+
+  fs.mkdirSync(path.dirname(to), { recursive: true });
+  fs.renameSync(from, to);
 }
 
-/* ---------------- DELETE ---------------- */
+/* ================= DELETE ================= */
 
 export function deleteNode(userId, workspaceId, relativePath) {
   const wsPath = ensureWorkspace(userId, workspaceId);
-  const fullPath = path.join(wsPath, relativePath);
+  const fullPath = safeJoin(wsPath, relativePath);
 
   if (fs.existsSync(fullPath)) {
     fs.rmSync(fullPath, { recursive: true, force: true });
   }
 }
 
-/* ---------------- RENAME ---------------- */
+/* ================= DELETE WORKSPACE ================= */
 
-export function renameNode(userId, workspaceId, oldPath, newPath) {
-  const wsPath = ensureWorkspace(userId, workspaceId);
+export function deleteWorkspace(userId, workspaceId) {
+  const wsPath = path.join(WORKSPACES_ROOT, userId, workspaceId);
 
-  fs.renameSync(
-    path.join(wsPath, oldPath),
-    path.join(wsPath, newPath)
-  );
+  if (fs.existsSync(wsPath)) {
+    fs.rmSync(wsPath, { recursive: true, force: true });
+  }
 }

@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import yaml from "js-yaml";
 import { getImageForWorkspace } from "../sandbox/imageResolver.js";
 
 export function generateCompose(userId, projectName, project) {
@@ -7,11 +8,9 @@ export function generateCompose(userId, projectName, project) {
 
   for (const svc of project.services) {
     services[svc.name] = {
-      image: getImageForWorkspace(svc.runtime),
+      image: getImageForWorkspace(),
       working_dir: "/app",
-      volumes: [
-        `./${svc.path}:/app`,
-      ],
+      volumes: [`./${svc.path}:/app`],
       command: svc.run,
       ports: svc.port ? [`${svc.port}:${svc.port}`] : [],
       tty: true,
@@ -31,12 +30,7 @@ export function generateCompose(userId, projectName, project) {
 
   const composePath = path.join(projectRoot, "docker-compose.yml");
 
-  fs.writeFileSync(
-    composePath,
-    JSON.stringify(compose, null, 2)
-      .replace(/"/g, "")
-      .replace(/,/g, "")
-  );
+  fs.writeFileSync(composePath, yaml.dump(compose));
 
   return composePath;
 }

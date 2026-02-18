@@ -1,0 +1,46 @@
+import fs from "fs";
+import path from "path";
+import FileNode from "../models/FileNode.js";
+
+export async function syncWorkspaceToDB(userId, workspaceId) {
+  const workspacePath = path.join(
+    process.cwd(),
+    "workspaces",
+    userId,
+    workspaceId
+  );
+
+  if (!fs.existsSync(workspacePath)) return;
+
+  // Clear existing DB records
+  await FileNode.deleteMany({ workspaceId });
+
+  function walk(dir, base = "") {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      const relativePath = base
+        ? `${base}/${entry.name}`
+        : entry.name;
+
+      if (entry.isDirectory()) {
+        FileNode.create({
+          workspaceId,
+          path: relativePath,
+          type: "folder",
+        });
+
+        walk(fullPath, relativePath);
+      } else {
+        FileNode.create({
+          workspaceId,
+          path: relativePath,
+          type: "file",
+        });
+      }
+    }
+  }
+
+  walk(workspacePath);
+}

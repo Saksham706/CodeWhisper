@@ -1,35 +1,38 @@
 import "../../styles/terminal.css";
+import { useWorkspace } from "../../context/WorkspaceContext";
 
-export default function TerminalTabs({
-  terminals = [],
-  activeTerminal,
-  setActiveTerminal,
-  closeTerminal,
-}) {
+export default function TerminalTabs() {
+  const {
+    terminals,
+    activeTerminal,
+    setActiveTerminal,
+    killTerminal,
+  } = useWorkspace();
+
+  if (!terminals.length) return null;
+
   return (
     <div className="terminal-tabs">
-      {terminals
-        .filter((t) => t?.id) // 🔥 guard invalid entries
-        .map((t, i) => (
-          <div
-            key={t.id} // ✅ stable, unique
-            className={`terminal-tab ${
-              activeTerminal === t.id ? "active" : ""
-            }`}
-            onClick={() => setActiveTerminal(t.id)}
+      {terminals.map((t, i) => (
+        <div
+          key={t.id}
+          className={`terminal-tab ${
+            activeTerminal === t.id ? "active" : ""
+          }`}
+          onClick={() => setActiveTerminal(t.id)}
+        >
+          Terminal {i + 1}
+          <span
+            className="close-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              killTerminal(t.id);
+            }}
           >
-            Terminal {i + 1}
-            <span
-              className="close-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                closeTerminal(t.id);
-              }}
-            >
-              ✕
-            </span>
-          </div>
-        ))}
+            ✕
+          </span>
+        </div>
+      ))}
     </div>
   );
 }

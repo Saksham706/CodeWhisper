@@ -1,23 +1,21 @@
 import express from "express";
+import { auth } from "../middleware/auth.js";
 import {
-  loadWorkspace,
-  createFile,
-  createFolder,
-  saveFile,
-  deleteNode,
-  renameNode,
+  createNode,
   readFile,
+  saveFile,
+  renameNode,
+  deleteNode,
+  loadTree,
 } from "../controllers/fileController.js";
 
 const router = express.Router();
 
-router.get("/load", loadWorkspace);
-router.post("/file", createFile);
-router.post("/folder", createFolder);
-router.put("/save", saveFile);
-router.post("/delete", deleteNode);
-router.put("/rename", renameNode);
-router.get("/read", readFile);
-
+router.get("/tree", auth, loadTree);
+router.get("/read", auth, readFile);
+router.post("/create", auth, createNode);
+router.put("/save", auth, saveFile);
+router.put("/rename", auth, renameNode);
+router.post("/delete", auth, deleteNode);
 
 export default router;

@@ -4,15 +4,15 @@ import "xterm/css/xterm.css";
 import { useWorkspace } from "../../context/WorkspaceContext";
 import "../../styles/terminal.css";
 
-export default function TerminalPanel({ terminalId }) {
-  const { socketRef } = useWorkspace();
+export default function TerminalPanel() {
+  const { socketRef, activeTerminal } = useWorkspace();
   const containerRef = useRef(null);
   const termRef = useRef(null);
 
   useEffect(() => {
-    if (!terminalId || !socketRef.current) return;
+    if (!activeTerminal || !socketRef.current) return;
 
-    // Create terminal ONCE
+    // Create terminal once
     if (!termRef.current) {
       termRef.current = new Terminal({
         theme: { background: "#1e1e1e" },
@@ -25,7 +25,7 @@ export default function TerminalPanel({ terminalId }) {
         socketRef.current.send(
           JSON.stringify({
             type: "input",
-            terminalId,
+            terminalId: activeTerminal,
             data,
           })
         );
@@ -33,14 +33,16 @@ export default function TerminalPanel({ terminalId }) {
     }
 
     // Mount terminal
-    containerRef.current.innerHTML = "";
-    termRef.current.open(containerRef.current);
-    termRef.current.focus();
+    if (containerRef.current) {
+      containerRef.current.innerHTML = "";
+      termRef.current.open(containerRef.current);
+      termRef.current.focus();
+    }
 
     // Listen for backend output
     const handler = (e) => {
       const msg = e.detail;
-      if (msg.terminalId === terminalId) {
+      if (msg.terminalId === activeTerminal) {
         termRef.current.write(msg.data);
       }
     };
@@ -50,7 +52,7 @@ export default function TerminalPanel({ terminalId }) {
     return () => {
       window.removeEventListener("terminal-output", handler);
     };
-  }, [terminalId]);
+  }, [activeTerminal]);
 
   return <div ref={containerRef} className="terminal-panel" />;
 }
