@@ -1,16 +1,18 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import api from "../utils/api";
 import "../styles/auth.css";
 
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 export default function Login() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const { login } = useAuth();
-  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,24 +26,21 @@ export default function Login() {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+      const { data } = await api.post("/auth/login", {
+        email,
+        password,
       });
 
-      const data = await res.json();
+      // 🔥 store access token in memory
+      login(data.accessToken, data.user);
 
-      if (!res.ok) {
-        setError(data.error || "Invalid email or password");
-        setLoading(false);
-        return;
-      }
-
-      login(data.token);
       navigate("/dashboard");
+
     } catch (err) {
-      setError("Server error. Please try again later.");
+      setError(
+        err.response?.data?.error ||
+          "Invalid email or password"
+      );
     } finally {
       setLoading(false);
     }
@@ -51,7 +50,7 @@ export default function Login() {
     <div className="auth-page">
       <form className="auth-card" onSubmit={handleSubmit}>
         <div className="auth-logo">
-          <img src="/Nlogo.png" alt="CodeWhisper" />
+          <img src="/icon.png" alt="CodeWhisper" />
         </div>
 
         <h2>Sign in</h2>
@@ -63,6 +62,7 @@ export default function Login() {
           placeholder="Email address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          required
         />
 
         <input
@@ -70,13 +70,20 @@ export default function Login() {
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          required
         />
 
         <div className="auth-forgot">
-          <span>Forgot password?</span>
+          <span onClick={() => navigate("/forgot")}>
+            Forgot password?
+          </span>
         </div>
 
-        <button type="submit" className="primary-btn" disabled={loading}>
+        <button
+          type="submit"
+          className="primary-btn"
+          disabled={loading}
+        >
           {loading ? "Signing in..." : "Enter CodeWhisper"}
         </button>
 
@@ -87,7 +94,10 @@ export default function Login() {
         <button
           type="button"
           className="google-btn"
-          onClick={() => alert("Google login coming soon")}
+          onClick={() =>
+            (window.location.href =
+              `${backendUrl}/api/auth/google`)
+          }
         >
           <img src="/google.png" alt="Google" />
           Continue with Google
@@ -95,7 +105,9 @@ export default function Login() {
 
         <p className="auth-switch">
           New to CodeWhisper?{" "}
-          <span onClick={() => navigate("/signup")}>Create account</span>
+          <span onClick={() => navigate("/signup")}>
+            Create account
+          </span>
         </p>
       </form>
     </div>

@@ -8,13 +8,15 @@ import {
 } from "react";
 import * as fileApi from "../services/fileApi";
 import { buildTree } from "../utils/buildTree";
+import { useAuth } from "../context/AuthContext";
 
 const WorkspaceContext = createContext();
-
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 const safeTerminalId = (id) =>
   "term_" + id.replace(/[^a-zA-Z0-9_-]/g, "_");
 
 export function WorkspaceProvider({ userId, workspaceId, children }) {
+  const { accessToken } = useAuth();
   /* ================= FILE STATE ================= */
 
   const [tree, setTree] = useState(null);
@@ -38,13 +40,14 @@ export function WorkspaceProvider({ userId, workspaceId, children }) {
   const wsReadyRef = useRef(false);
   const pendingCreateRef = useRef(null);
   const pendingRunRef = useRef(null);
+  const refreshTimeoutRef = useRef(null);
 
   /* ================= AUTOSAVE ================= */
 
   const SAVE_DELAY = 800;
   const saveTimersRef = useRef({});
   const fileContentsRef = useRef({});
-
+  
   useEffect(() => {
     fileContentsRef.current = fileContents;
   }, [fileContents]);
@@ -52,10 +55,11 @@ export function WorkspaceProvider({ userId, workspaceId, children }) {
   /* ================= WEBSOCKET ================= */
 
   useEffect(() => {
-    if (!userId || !workspaceId) return;
+    if (!userId || !workspaceId || !accessToken) return;
 
-    const token = localStorage.getItem("token");
-    const ws = new WebSocket(`ws://localhost:5000?token=${token}`);
+    const ws = new WebSocket(
+      `${backendUrl}/ws?token=${accessToken}`
+    );
 
     socketRef.current = ws;
 
@@ -71,18 +75,16 @@ export function WorkspaceProvider({ userId, workspaceId, children }) {
     ws.onmessage = (e) => {
       const msg = JSON.parse(e.data);
 
-     if (msg.type === "output") {
+      if (msg.type === "output") {
         window.dispatchEvent(
           new CustomEvent("terminal-output", { detail: msg })
         );
 
         clearTimeout(refreshTimeoutRef.current);
-
         refreshTimeoutRef.current = setTimeout(() => {
           loadWorkspace();
         }, 500);
       }
-
 
       if (msg.type === "created") {
         setTerminals((prev) =>
@@ -106,12 +108,12 @@ export function WorkspaceProvider({ userId, workspaceId, children }) {
       }
     };
 
-    return () => ws.onclose = () => {
-  wsReadyRef.current = false;
-  socketRef.current = null;
-};
-
-  }, [userId, workspaceId]);
+    return () => {
+      wsReadyRef.current = false;
+      socketRef.current = null;
+      ws.close();
+    };
+  }, [userId, workspaceId, accessToken]);
 
   const sendWS = (payload) => {
     if (socketRef.current?.readyState === WebSocket.OPEN) {
@@ -151,16 +153,16 @@ export function WorkspaceProvider({ userId, workspaceId, children }) {
   /* ================= LOAD WORKSPACE ================= */
 
   const loadWorkspace = useCallback(async () => {
-    if (!workspaceId) return;
-
-    try {
-      const nodes = await fileApi.loadTree(workspaceId);
-      setTree(buildTree(nodes));
-    } catch (err) {
-      console.error("Failed to load workspace", err);
-      setTree({ name: workspaceId, type: "folder", children: [] });
-    }
-  }, [workspaceId]);
+      if (!workspaceId || !accessToken) return;
+  
+      try {
+        const nodes = await fileApi.loadTree(accessToken, workspaceId);
+        setTree(buildTree(nodes));
+      } catch (err) {
+        console.error("Failed to load workspace", err);
+        setTree({ name: workspaceId, type: "folder", children: [] });
+      }
+    }, [workspaceId, accessToken]);
 
   useEffect(() => {
     loadWorkspace();
@@ -183,69 +185,73 @@ export function WorkspaceProvider({ userId, workspaceId, children }) {
 
   /* ================= FILE SYSTEM ================= */
 
-  const addFile = async (parentPath, name) => {
-    const path = parentPath ? `${parentPath}/${name}` : name;
-    await fileApi.createFile(userId, workspaceId, path);
-    await loadWorkspace();
-    await openFile(path);
-  };
+   const addFile = async (parentPath, name) => {
+     const path = parentPath ? `${parentPath}/${name}` : name;
+     await fileApi.createFile(accessToken, workspaceId, path);
+     await loadWorkspace();
+     await openFile(path);
+   };
 
-  const addFolder = async (parentPath, name) => {
-    const path = parentPath ? `${parentPath}/${name}` : name;
-    await fileApi.createFolder(userId, workspaceId, path);
-    await loadWorkspace();
-  };
+ const addFolder = async (parentPath, name) => {
+     const path = parentPath ? `${parentPath}/${name}` : name;
+     await fileApi.createFolder(accessToken, workspaceId, path);
+     await loadWorkspace();
+   };
 
-  const openFile = async (path) => {
-    setOpenTabs((prev) =>
-      prev.includes(path) ? prev : [...prev, path]
-    );
-
-    setActiveFile(path);
-
-    if (fileContentsRef.current[path] !== undefined) return;
-
-    const content = await fileApi.readFile(userId, workspaceId, path);
-
-    setFileContents((prev) => ({
-      ...prev,
-      [path]: content || "",
-    }));
-  };
+ const openFile = async (path) => {
+     setOpenTabs((prev) =>
+       prev.includes(path) ? prev : [...prev, path]
+     );
+ 
+     setActiveFile(path);
+ 
+     if (fileContentsRef.current[path] !== undefined) return;
+ 
+     const content = await fileApi.readFile(
+       accessToken,
+       workspaceId,
+       path
+     );
+ 
+     setFileContents((prev) => ({
+       ...prev,
+       [path]: content || "",
+     }));
+   };
 
   const updateContent = (path, content) => {
-    setFileContents((prev) => ({
-      ...prev,
-      [path]: content,
-    }));
-
-    setDirtyFiles((prev) => {
-      const s = new Set(prev);
-      s.add(path);
-      return s;
-    });
-
-    clearTimeout(saveTimersRef.current[path]);
-
-    saveTimersRef.current[path] = setTimeout(async () => {
-      try {
-        await fileApi.saveFile(
-          userId,
-          workspaceId,
-          path,
-          content
-        );
-
-        setDirtyFiles((prev) => {
-          const s = new Set(prev);
-          s.delete(path);
-          return s;
-        });
-      } catch (e) {
-        console.error("Save failed", e);
-      }
-    }, SAVE_DELAY);
-  };
+      setFileContents((prev) => ({
+        ...prev,
+        [path]: content,
+      }));
+  
+      setDirtyFiles((prev) => {
+        const s = new Set(prev);
+        s.add(path);
+        return s;
+      });
+  
+      clearTimeout(saveTimersRef.current[path]);
+  
+      saveTimersRef.current[path] = setTimeout(async () => {
+        try {
+          await fileApi.saveFile(
+            accessToken,
+            workspaceId,
+            path,
+            content
+          );
+  
+          setDirtyFiles((prev) => {
+            const s = new Set(prev);
+            s.delete(path);
+            return s;
+          });
+        } catch (e) {
+          console.error("Save failed", e);
+        }
+      }, SAVE_DELAY);
+    };
 
 const closeTab = (path) => {
   setOpenTabs((prev) => prev.filter((t) => t !== path));
@@ -260,125 +266,139 @@ const closeTab = (path) => {
 };
 
 
-  const renameNode = async (oldPath, newName) => {
+const renameNode = async (oldPath, newName) => {
     const newPath = oldPath
       .split("/")
       .slice(0, -1)
       .concat(newName)
       .join("/");
 
-    await fileApi.renameNode(userId, workspaceId, oldPath, newPath);
+    await fileApi.renameNode(
+      accessToken,
+      workspaceId,
+      oldPath,
+      newPath
+    );
+
     await loadWorkspace();
   };
 
   const deleteNode = async (path) => {
-    await fileApi.deleteNode(userId, workspaceId, path);
-    await loadWorkspace();
-  };
+      await fileApi.deleteNode(accessToken, workspaceId, path);
+      await loadWorkspace();
+    };
 
   /* ================= RUN FILE ================= */
 
-  const runCode = async () => {
-    if (!activeFile) return;
+ const runCode = async () => {
+     if (!activeFile) return;
+ 
+     setPreviewUrl(null);
+     setShowTerminal(true);
+ 
+     await fileApi.saveFile(
+       accessToken,
+       workspaceId,
+       activeFile,
+       fileContentsRef.current[activeFile] || ""
+     );
+ 
+     const terminalId = safeTerminalId(activeFile);
+     const file = `/workspace/${activeFile}`;
+ 
+     let command = "";
+ 
+     if (activeFile.endsWith(".py"))
+       command = `python3 "${file}"`;
+     else if (activeFile.endsWith(".js"))
+       command = `node "${file}"`;
+     else if (activeFile.endsWith(".cpp"))
+       command = `g++ "${file}" -o /workspace/a.out && /workspace/a.out`;
+     else if (activeFile.endsWith(".c"))
+       command = `gcc "${file}" -o /workspace/a.out && /workspace/a.out`;
+     else if (activeFile.endsWith(".java")) {
+       const dir = activeFile.split("/").slice(0, -1).join("/");
+       const cls = activeFile.split("/").pop().replace(".java", "");
+       command = `cd /workspace/${dir} && javac ${cls}.java && java ${cls}`;
+     } else return;
+ 
+     if (!terminals.find((t) => t.id === terminalId)) {
+       pendingRunRef.current = command + "\n";
+       sendWS({
+         type: "create",
+         terminalId,
+         userId,
+         workspaceId,
+       });
+       return;
+     }
+ 
+     setActiveTerminal(terminalId);
+     sendWS({ type: "input", terminalId, data: command + "\n" });
+   };
 
-    setPreviewUrl(null);
+  /* ================= RUN PROJECT ================= */
+
+const runProject = async () => {
     setShowTerminal(true);
 
+    const res = await fetch(
+      `${backendUrl}/api/execute`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          workspaceId,
+          command: "npm install && npm start",
+        }),
+      }
+    );
+
+    const { jobId } = await res.json();
+
+    const poll = setInterval(async () => {
+      const jobRes = await fetch(
+        `${backendUrl}/api/jobs/${jobId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      const jobData = await jobRes.json();
+
+      if (jobData.state === "completed") {
+        clearInterval(poll);
+        await loadWorkspace();
+
+        if (jobData.result?.output) {
+          setShowTerminal(true);
+        }
+      }
+    }, 1000);
+  };
+
+
+  /* ================= PREVIEW ================= */
+
+  const refreshPreview = async () => {
+    if (!activeFile?.endsWith(".html")) return;
+
     await fileApi.saveFile(
-      userId,
+      accessToken,
       workspaceId,
       activeFile,
       fileContentsRef.current[activeFile] || ""
     );
 
-    const terminalId = safeTerminalId(activeFile);
-    const file = `/workspace/${activeFile}`;
-
-    let command = "";
-
-    if (activeFile.endsWith(".py"))
-      command = `python3 "${file}"`;
-    else if (activeFile.endsWith(".js"))
-      command = `node "${file}"`;
-    else if (activeFile.endsWith(".cpp"))
-      command = `g++ "${file}" -o /workspace/a.out && /workspace/a.out`;
-    else if (activeFile.endsWith(".c"))
-      command = `gcc "${file}" -o /workspace/a.out && /workspace/a.out`;
-    else if (activeFile.endsWith(".java")) {
-      const dir = activeFile.split("/").slice(0, -1).join("/");
-      const cls = activeFile.split("/").pop().replace(".java", "");
-      command = `cd /workspace/${dir} && javac ${cls}.java && java ${cls}`;
-    } else return;
-
-    if (!terminals.find((t) => t.id === terminalId)) {
-      pendingRunRef.current = command + "\n";
-      createTerminal(terminalId);
-      return;
-    }
-
-    setActiveTerminal(terminalId);
-    sendWS({ type: "input", terminalId, data: command + "\n" });
+    setPreviewUrl(
+      `${backendUrl}/preview/${userId}/${workspaceId}/${activeFile}?t=${Date.now()}`
+    );
   };
-
-  /* ================= RUN PROJECT ================= */
-
-  const runProject = async () => {
-  setShowTerminal(true);
-
-  const token = localStorage.getItem("token");
-
-  const res = await fetch("http://localhost:5000/api/run", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ workspaceId }),
-  });
-
-  const data = await res.json();
-
-  const terminalId = `project_${workspaceId}`;
-
-  if (!terminals.find((t) => t.id === terminalId)) {
-    createTerminal(terminalId);
-  }
-
-  setActiveTerminal(terminalId);
-
-  if (data.output) {
-    sendWS({
-      type: "input",
-      terminalId,
-      data: data.output + "\n",
-    });
-  }
-
-  if (data.preview) {
-    setPreviewUrl(data.preview);
-  }
-
-  // 🔥 ADD THIS
-  await loadWorkspace();
-};
-
-
-  /* ================= PREVIEW ================= */
-
- const refreshPreview = async () => {
-  if (!activeFile?.endsWith(".html")) return;
-
-  await fileApi.saveFile(
-    userId,
-    workspaceId,
-    activeFile,
-    fileContentsRef.current[activeFile] || ""
-  );
-
-  setPreviewUrl(
-    `http://localhost:5000/preview/${userId}/${workspaceId}/${activeFile}?t=${Date.now()}`
-  );
-};
 
 
   useEffect(() => {

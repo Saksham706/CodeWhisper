@@ -1,21 +1,14 @@
 import express from "express";
 import path from "path";
-import { execInWorkspace } from "../sandbox/execService.js";
-import { detectProject } from "../projects/projectDetector.js";
 import { auth } from "../middleware/auth.js";
-import { syncWorkspaceToDB } from "../services/syncService.js";
+import { detectProject } from "../projects/projectDetector.js";
+import { codeQueue } from "../queue/codeQueue.js";
 
 const router = express.Router();
 
 router.post("/", auth, async (req, res) => {
   try {
     const { workspaceId } = req.body;
-
-    if (!workspaceId) {
-      return res.status(400).json({
-        error: "workspaceId is required",
-      });
-    }
 
     const workspacePath = path.join(
       process.cwd(),
@@ -28,33 +21,26 @@ router.post("/", auth, async (req, res) => {
 
     if (!detected) {
       return res.status(400).json({
-        error: "No runnable project detected",
+        error: "No supported project detected",
       });
     }
 
-    const result = await execInWorkspace({
+    const job = await codeQueue.add("run-project", {
       userId: req.user.id,
       workspaceId,
       workspacePath,
-      command: detected.run,
+      command: detected.command,
+      mode: detected.mode,
     });
 
-    // 🔥 Sync filesystem changes (npm install, etc.)
-    await syncWorkspaceToDB(req.user.id, workspaceId);
-
     res.json({
-      success: true,
-      output: result.output || "",
-      preview: detected.port
-        ? `http://localhost:${detected.port}`
-        : null,
+      jobId: job.id,
+      type: detected.type,
+      port: detected.port || null,
     });
 
   } catch (err) {
-    console.error("RUN PROJECT ERROR:", err);
-    res.status(500).json({
-      error: "Failed to run project",
-    });
+    res.status(500).json({ error: "Run failed" });
   }
 });
 

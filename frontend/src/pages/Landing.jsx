@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import "../styles/landing.css";
+import { FaInstagram, FaLinkedin } from "react-icons/fa";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -12,11 +13,12 @@ export default function Landing() {
     uptime: 0,
   });
 
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
   /* ================= FETCH STATS ================= */
 
   useEffect(() => {
     const loadStats = () => {
-      fetch("http://localhost:5000/api/stats")
+      fetch(`${backendUrl}/api/stats`)
         .then((res) => {
           if (!res.ok) throw new Error("Stats fetch failed");
           return res.json();
@@ -92,27 +94,35 @@ export default function Landing() {
       </section>
 
       {/* STATS */}
-      <section className="stats">
-        <div className="stat">
-          <h3>{stats.activeUsers}</h3>
-          <p>Active Developers</p>
-        </div>
+      {/* STATS */}
+<section className="stats">
 
-        <div className="stat">
-          <h3>{stats.totalUsers}</h3>
-          <p>Total Users</p>
-        </div>
+  <div className="stats-header">
+    <span className="live-indicator"></span>
+    <p className="live-text">Live Platform Metrics</p>
+  </div>
 
-        <div className="stat">
-          <h3>{stats.projectsCreated}</h3>
-          <p>Projects Created</p>
-        </div>
+  <div className="stat">
+    <h3>{stats.activeUsers}</h3>
+    <p>Active Developers</p>
+  </div>
 
-        <div className="stat">
-          <h3>{formatUptime(stats.uptime)}</h3>
-          <p>Platform Uptime</p>
-        </div>
-      </section>
+  <div className="stat">
+    <h3>{stats.totalUsers}</h3>
+    <p>Total Users</p>
+  </div>
+
+  <div className="stat">
+    <h3>{stats.projectsCreated}</h3>
+    <p>Projects Created</p>
+  </div>
+
+  <div className="stat">
+    <h3>{formatUptime(stats.uptime)}</h3>
+    <p>Platform Uptime</p>
+  </div>
+
+</section>
 
       {/* VISION */}
       <section className="vision">
@@ -220,8 +230,62 @@ export default function Landing() {
 
       {/* FOOTER */}
       <footer className="footer">
-        © 2026 CodeWhisper AI — Designed for developers
-      </footer>
+  <div className="footer-container">
+
+    {/* Brand */}
+    <div>
+      <h3>CodeWhisper</h3>
+      <p>
+        A cloud-native AI workspace built for modern developers.
+        Think, build, and scale — without friction.
+      </p>
+    </div>
+
+    {/* Contact */}
+    <div>
+      <h3>Contact</h3>
+      <a href="mailto:support@codewhisper.ai">
+        📧 codewhisper.ai@gmail.com
+      </a>
+      <a href="tel:+919999999999">
+        📞 +91 98977 87403
+      </a>
+    </div>
+
+    {/* Social */}
+    <div>
+      <h3>Connect With Us</h3>
+      <a 
+        href="https://www.instagram.com/codewhisper.ai" 
+        target="_blank" 
+        rel="noopener noreferrer"
+      >
+        <FaInstagram />
+      </a>
+      <a 
+        href="https://linkedin.com/" 
+        target="_blank" 
+        rel="noopener noreferrer"
+      >
+        <FaLinkedin /> 
+      </a>
+    </div>
+
+    {/* Product */}
+    <div>
+      <h3>Product</h3>
+      <a href="#">Features</a>
+      <a href="#">Documentation</a>
+      <a href="#">Privacy Policy</a>
+      <a href="#">Terms of Service</a>
+    </div>
+
+  </div>
+
+  <div className="footer-bottom">
+    © 2026 CodeWhisper AI — Built with intelligence.
+  </div>
+</footer>
     </div>
   );
 }

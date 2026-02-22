@@ -1,4 +1,5 @@
-const BASE = "http://localhost:5000/api/workspaces";
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
+const BASE = `${backendUrl}/api/workspaces`;
 
 const authHeaders = (token) => ({
   Authorization: `Bearer ${token}`,

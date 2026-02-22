@@ -1,10 +1,4 @@
 const containers = new Map();
-/*
- workspaceId -> {
-   container,
-   lastUsed: number
- }
-*/
 
 export function registerContainer(workspaceId, container) {
   containers.set(workspaceId, {

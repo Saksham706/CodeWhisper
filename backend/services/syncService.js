@@ -12,8 +12,7 @@ export async function syncWorkspaceToDB(userId, workspaceId) {
 
   if (!fs.existsSync(workspacePath)) return;
 
-  // Clear existing DB records
-  await FileNode.deleteMany({ workspaceId });
+  const nodes = [];
 
   function walk(dir, base = "") {
     const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -25,7 +24,7 @@ export async function syncWorkspaceToDB(userId, workspaceId) {
         : entry.name;
 
       if (entry.isDirectory()) {
-        FileNode.create({
+        nodes.push({
           workspaceId,
           path: relativePath,
           type: "folder",
@@ -33,7 +32,7 @@ export async function syncWorkspaceToDB(userId, workspaceId) {
 
         walk(fullPath, relativePath);
       } else {
-        FileNode.create({
+        nodes.push({
           workspaceId,
           path: relativePath,
           type: "file",
@@ -43,4 +42,11 @@ export async function syncWorkspaceToDB(userId, workspaceId) {
   }
 
   walk(workspacePath);
+
+  // Replace DB records in optimized way
+  await FileNode.deleteMany({ workspaceId });
+
+  if (nodes.length > 0) {
+    await FileNode.insertMany(nodes);
+  }
 }

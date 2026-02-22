@@ -7,4 +7,6 @@ const fileNodeSchema = new mongoose.Schema({
   content: String,
 }, { timestamps: true });
 
+fileNodeSchema.index({ workspaceId: 1, path: 1 });
+
 export default mongoose.model("FileNode", fileNodeSchema);

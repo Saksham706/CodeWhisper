@@ -1,35 +1,58 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import { jwtDecode } from "jwt-decode";
-
+import { createContext, useContext, useState, useEffect } from "react";
+import api from "../utils/api";
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(
-    localStorage.getItem("token")
-  );
-  const [user, setUser] = useState(null);
+  const [accessToken, setAccessToken] = useState(null);
+  const [user, setUser] = useState(null);   // ✅ ADD THIS
+  const [loading, setLoading] = useState(true);
 
+  /* ================= AUTO REFRESH ON APP LOAD ================= */
   useEffect(() => {
-    if (token) {
-      const decoded = jwtDecode(token);
-      setUser({ id: decoded.id });
-    }
-  }, [token]);
+    const checkAuth = async () => {
+      try {
+        const { data } = await api.post("/auth/refresh-token");
 
-  const login = (token) => {
-    localStorage.setItem("token", token);
-    setToken(token);
+        setAccessToken(data.accessToken);
+        setUser(data.user); // ✅ Now valid
+      } catch {
+        setAccessToken(null);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  /* ================= LOGIN ================= */
+  const login = (token, userData) => {
+    setAccessToken(token);
+    setUser(userData);
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    setToken(null);
+  /* ================= LOGOUT ================= */
+  const logout = async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch {}
+
+    setAccessToken(null);
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        accessToken,
+        user,        // ✅ EXPOSE USER
+        login,
+        logout,
+        loading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -12,7 +12,7 @@ import {
 import "../styles/dashboard.css";
 
 export default function Dashboard() {
-  const { token } = useAuth();
+  const {  accessToken, loading } = useAuth();
   const navigate = useNavigate();
 
   const [workspaces, setWorkspaces] = useState([]);
@@ -30,8 +30,20 @@ export default function Dashboard() {
   const createRef = useRef(null);
 
   useEffect(() => {
-    listWorkspaces(token).then(setWorkspaces);
-  }, [token]);
+  if (loading) return;
+  if (!accessToken) return;
+
+  const load = async () => {
+    try {
+      const data = await listWorkspaces(accessToken);
+      setWorkspaces(data);
+    } catch (err) {
+      console.error("Failed to load workspaces", err);
+    }
+  };
+
+  load();
+}, [accessToken, loading]);
 
   useEffect(() => {
     if (showSearch) searchRef.current?.focus();
@@ -44,7 +56,7 @@ export default function Dashboard() {
 
   const create = async () => {
     if (!newName.trim()) return;
-    const ws = await createWorkspace(token, newName.trim());
+    const ws = await createWorkspace(accessToken, newName.trim());
     navigate(`/workspace/${ws._id}`);
   };
 
@@ -53,7 +65,7 @@ export default function Dashboard() {
       setRenamingId(null);
       return;
     }
-    const updated = await renameWorkspace(token, ws._id, renameValue);
+    const updated = await renameWorkspace(accessToken, ws._id, renameValue);
     setWorkspaces((p) =>
       p.map((w) => (w._id === ws._id ? updated : w))
     );
@@ -159,13 +171,13 @@ export default function Dashboard() {
                   }}>✏️ Rename</div>
 
                   <div onClick={async () => {
-                    const copy = await duplicateWorkspace(token, ws._id);
+                    const copy = await duplicateWorkspace(accessToken, ws._id);
                     setWorkspaces(p => [copy, ...p]);
                     setMenuOpen(null);
                   }}>📋 Duplicate</div>
 
                   <div onClick={async () => {
-                    const updated = await pinWorkspace(token, ws._id, !ws.isPinned);
+                    const updated = await pinWorkspace(accessToken, ws._id, !ws.isPinned);
                     setWorkspaces(p =>
                       p.map(w => w._id === ws._id ? updated : w)
                     );
@@ -177,7 +189,7 @@ export default function Dashboard() {
                   <div
                     className="danger"
                     onClick={async () => {
-                      await deleteWorkspace(token, ws._id);
+                      await deleteWorkspace(accessToken, ws._id);
                       setWorkspaces(p => p.filter(w => w._id !== ws._id));
                     }}
                   >

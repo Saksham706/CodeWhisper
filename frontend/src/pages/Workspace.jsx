@@ -143,16 +143,16 @@ function WorkspaceLayout() {
 
 /* ================= WORKSPACE META LOADER ================= */
 
-function WorkspaceLoader({ workspaceId, token }) {
+function WorkspaceLoader({ workspaceId, accessToken }) {
   const { setCurrentWorkspace } = useWorkspace();
 
   useEffect(() => {
-    if (!workspaceId || !token) return;
+    if (!workspaceId || !accessToken) return;
 
-    getWorkspace(token, workspaceId)
+    getWorkspace(accessToken, workspaceId)
       .then(setCurrentWorkspace)
       .catch(() => setCurrentWorkspace(null));
-  }, [workspaceId, token]);
+  }, [workspaceId, accessToken]);
 
   return null;
 }
@@ -161,15 +161,18 @@ function WorkspaceLoader({ workspaceId, token }) {
 
 export default function Workspace() {
   const { id: workspaceId } = useParams();
-  const { user, token } = useAuth();
+  const { user, accessToken, loading } = useAuth();
 
-  if (!user) return null;
+  if (loading) return null;
+  if (!user || !accessToken) return null;
+  
 
   return (
     <WorkspaceProvider userId={user.id} workspaceId={workspaceId}>
       <WorkspaceLoader
+        userId={user.id}
         workspaceId={workspaceId}
-        token={token}
+        accessToken={accessToken}
       />
       <WorkspaceLayout />
     </WorkspaceProvider>

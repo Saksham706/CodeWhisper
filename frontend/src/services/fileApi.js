@@ -1,10 +1,9 @@
-const BASE = "http://localhost:5000/api/files";
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
+const BASE = `${backendUrl}/api/files`;
 
-/* ================= AUTH HELPERS ================= */
+/* ================= AUTH HELPER ================= */
 
-function getAuthHeaders(isJson = true) {
-  const token = localStorage.getItem("token");
-
+const authHeaders = (token, isJson = true) => {
   if (!token) {
     throw new Error("User not authenticated");
   }
@@ -18,15 +17,15 @@ function getAuthHeaders(isJson = true) {
   }
 
   return headers;
-}
+};
 
 /* ================= LOAD TREE ================= */
 
-export async function loadTree(workspaceId) {
+export async function loadTree(token, workspaceId) {
   const res = await fetch(
     `${BASE}/tree?workspaceId=${workspaceId}`,
     {
-      headers: getAuthHeaders(false),
+      headers: authHeaders(token, false),
     }
   );
 
@@ -37,13 +36,12 @@ export async function loadTree(workspaceId) {
   return res.json();
 }
 
-/* ================= CREATE FILE / FOLDER ================= */
-/* Backend uses ONE route: POST /api/files/create */
+/* ================= CREATE FILE ================= */
 
-export async function createFile(userId, workspaceId, path) {
+export async function createFile(token, workspaceId, path) {
   const res = await fetch(`${BASE}/create`, {
     method: "POST",
-    headers: getAuthHeaders(),
+    headers: authHeaders(token),
     body: JSON.stringify({
       workspaceId,
       path,
@@ -51,17 +49,14 @@ export async function createFile(userId, workspaceId, path) {
     }),
   });
 
-  if (!res.ok) {
-    throw new Error("Failed to create file");
-  }
-
+  if (!res.ok) throw new Error("Failed to create file");
   return res.json();
 }
 
-export async function createFolder(userId, workspaceId, path) {
+export async function createFolder(token, workspaceId, path) {
   const res = await fetch(`${BASE}/create`, {
     method: "POST",
-    headers: getAuthHeaders(),
+    headers: authHeaders(token),
     body: JSON.stringify({
       workspaceId,
       path,
@@ -69,28 +64,21 @@ export async function createFolder(userId, workspaceId, path) {
     }),
   });
 
-  if (!res.ok) {
-    throw new Error("Failed to create folder");
-  }
-
+  if (!res.ok) throw new Error("Failed to create folder");
   return res.json();
 }
 
 /* ================= READ FILE ================= */
 
-export async function readFile(userId, workspaceId, path) {
+export async function readFile(token, workspaceId, path) {
   const res = await fetch(
-    `${BASE}/read?workspaceId=${workspaceId}&path=${encodeURIComponent(
-      path
-    )}`,
+    `${BASE}/read?workspaceId=${workspaceId}&path=${encodeURIComponent(path)}`,
     {
-      headers: getAuthHeaders(false),
+      headers: authHeaders(token, false),
     }
   );
 
-  if (!res.ok) {
-    throw new Error("Failed to read file");
-  }
+  if (!res.ok) throw new Error("Failed to read file");
 
   const data = await res.json();
   return data.content ?? "";
@@ -98,10 +86,10 @@ export async function readFile(userId, workspaceId, path) {
 
 /* ================= SAVE FILE ================= */
 
-export async function saveFile(userId, workspaceId, path, content) {
+export async function saveFile(token, workspaceId, path, content) {
   const res = await fetch(`${BASE}/save`, {
     method: "PUT",
-    headers: getAuthHeaders(),
+    headers: authHeaders(token),
     body: JSON.stringify({
       workspaceId,
       path,
@@ -109,24 +97,21 @@ export async function saveFile(userId, workspaceId, path, content) {
     }),
   });
 
-  if (!res.ok) {
-    throw new Error("Failed to save file");
-  }
-
+  if (!res.ok) throw new Error("Failed to save file");
   return res.json();
 }
 
-/* ================= RENAME FILE / FOLDER ================= */
+/* ================= RENAME ================= */
 
 export async function renameNode(
-  userId,
+  token,
   workspaceId,
   oldPath,
   newPath
 ) {
   const res = await fetch(`${BASE}/rename`, {
     method: "PUT",
-    headers: getAuthHeaders(),
+    headers: authHeaders(token),
     body: JSON.stringify({
       workspaceId,
       oldPath,
@@ -134,28 +119,22 @@ export async function renameNode(
     }),
   });
 
-  if (!res.ok) {
-    throw new Error("Failed to rename node");
-  }
-
+  if (!res.ok) throw new Error("Failed to rename node");
   return res.json();
 }
 
-/* ================= DELETE FILE / FOLDER ================= */
+/* ================= DELETE ================= */
 
-export async function deleteNode(userId, workspaceId, path) {
+export async function deleteNode(token, workspaceId, path) {
   const res = await fetch(`${BASE}/delete`, {
     method: "POST",
-    headers: getAuthHeaders(),
+    headers: authHeaders(token),
     body: JSON.stringify({
       workspaceId,
       path,
     }),
   });
 
-  if (!res.ok) {
-    throw new Error("Failed to delete node");
-  }
-
+  if (!res.ok) throw new Error("Failed to delete node");
   return res.json();
 }

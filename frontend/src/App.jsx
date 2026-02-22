@@ -4,6 +4,10 @@ import Signup from "./auth/Signup";
 import Dashboard from "./pages/Dashboard";
 import Workspace from "./pages/Workspace";
 import Landing from "./pages/Landing";
+import ForgotPassword from "./auth/ForgotPassword";
+import ResetPassword from "./auth/ResetPassword";
+import OAuthSuccess from "./auth/OAuthSuccess";
+
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
 /* =========================
@@ -11,8 +15,30 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 ========================= */
 
 function ProtectedRoute({ children }) {
-  const { token } = useAuth();
-  return token ? children : <Navigate to="/login" replace />;
+  const { accessToken, loading } = useAuth();
+
+  if (loading) return null; // or spinner
+
+  if (!accessToken) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
+/* =========================
+   PUBLIC ROUTE (Optional)
+   Prevent logged user from seeing login/signup again
+========================= */
+
+function PublicRoute({ children }) {
+  const { accessToken } = useAuth();
+
+  if (accessToken) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
 }
 
 /* =========================
@@ -24,12 +50,50 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* PUBLIC */}
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
+          {/* ===== PUBLIC ROUTES ===== */}
 
-          {/* PROTECTED */}
+          <Route path="/" element={<Landing />} />
+
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
+
+          <Route
+            path="/signup"
+            element={
+              <PublicRoute>
+                <Signup />
+              </PublicRoute>
+            }
+          />
+
+          <Route
+            path="/forgot"
+            element={
+              <PublicRoute>
+                <ForgotPassword />
+              </PublicRoute>
+            }
+          />
+
+          <Route
+            path="/reset"
+            element={
+              <PublicRoute>
+                <ResetPassword />
+              </PublicRoute>
+            }
+          />
+
+          <Route path="/oauth-success" element={<OAuthSuccess />} />
+
+          {/* ===== PROTECTED ROUTES ===== */}
+
           <Route
             path="/dashboard"
             element={
@@ -48,7 +112,8 @@ export default function App() {
             }
           />
 
-          {/* FALLBACK */}
+          {/* ===== FALLBACK ===== */}
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

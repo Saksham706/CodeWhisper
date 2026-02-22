@@ -4,14 +4,17 @@ import path from "path";
 export function detectProject(workspacePath) {
   const files = fs.readdirSync(workspacePath);
 
+  /* ================= SPRING BOOT ================= */
   if (files.includes("pom.xml")) {
     return {
       type: "spring-boot",
-      run: "mvn spring-boot:run",
+      command: "mvn spring-boot:run",
       port: 8080,
+      mode: "server",
     };
   }
 
+  /* ================= NODE / MERN ================= */
   if (files.includes("package.json")) {
     const pkg = JSON.parse(
       fs.readFileSync(
@@ -20,31 +23,49 @@ export function detectProject(workspacePath) {
       )
     );
 
-    if (pkg.scripts?.dev) {
+    if (pkg.dependencies?.react && pkg.scripts?.start) {
       return {
-        type: "node",
-        run: "npm install && npm run dev",
+        type: "mern-client",
+        command: "[ -d node_modules ] || npm install && npm start",
         port: 3000,
+        mode: "server",
       };
     }
 
-    if (pkg.scripts?.start) {
+    if (pkg.dependencies?.express) {
       return {
-        type: "node",
-        run: "npm install && npm start",
+        type: "node-api",
+        command: "[ -d node_modules ] || npm install && npm start",
+        port: 8000,
+        mode: "server",
+      };
+    }
+
+    if (pkg.scripts?.dev) {
+      return {
+        type: "node-dev",
+        command: "[ -d node_modules ] || npm install && npm run dev",
         port: 3000,
+        mode: "server",
       };
     }
   }
 
-  if (
-    files.includes("requirements.txt") ||
-    files.includes("app.py")
-  ) {
+  /* ================= C++ PROJECT ================= */
+  if (files.some(f => f.endsWith(".cpp"))) {
     return {
-      type: "python",
-      run: "pip install -r requirements.txt || true && python app.py",
-      port: 5000,
+      type: "cpp",
+      command: "g++ *.cpp -o app && ./app",
+      mode: "single",
+    };
+  }
+
+  /* ================= C PROJECT ================= */
+  if (files.some(f => f.endsWith(".c"))) {
+    return {
+      type: "c",
+      command: "gcc *.c -o app && ./app",
+      mode: "single",
     };
   }
 

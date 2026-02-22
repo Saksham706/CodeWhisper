@@ -1,12 +1,5 @@
 /* ========== LAYOUT ========== */
 
-body {
-  margin: 0;
-  background: #1e1e1e;
-  color: #d4d4d4;
-  font-family: system-ui, sans-serif;
-}
-
 .workspace {
   display: flex;
   height: calc(100vh - 42px); /* navbar height */

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useWorkspace } from "../../context/WorkspaceContext";
-import { LANGUAGE_META } from "../../config/languages";
+import { getFileIcon } from "../../utils/getFileIcon";
 import "../../styles/explorer.css";
 
 export default function TreeNode({ node, path }) {
@@ -19,14 +19,11 @@ export default function TreeNode({ node, path }) {
     deleteNode,
     activeFile,
     dirtyFiles,
-    setCreateRequest
+    setCreateRequest,
   } = useWorkspace();
 
-   if (node.name === ".workspace.json") {
-    return null;
-  }
-  
-  // ✅ VS CODE STYLE PATH
+  if (node.name === ".workspace.json") return null;
+
   const currentPath = path ? `${path}/${node.name}` : node.name;
 
   const isActive =
@@ -34,10 +31,7 @@ export default function TreeNode({ node, path }) {
 
   const isDirty = dirtyFiles.has(currentPath);
 
-  const ext = node.name.split(".").pop();
-  const meta = LANGUAGE_META[ext];
-
-  /* AUTO FOCUS */
+  /* ================= AUTO FOCUS ================= */
   useEffect(() => {
     if ((editing || creating) && inputRef.current) {
       inputRef.current.focus();
@@ -57,30 +51,30 @@ export default function TreeNode({ node, path }) {
     setEditing(false);
   };
 
+  /* ================= NEW NODE ================= */
   if (node.isNew) {
-  return (
-    <div className="tree-row creating">
-      <span className="file-indent" />
-      <input
-        ref={inputRef}
-        className="rename-input"
-        placeholder={
-          node.type === "file" ? "newFile.ext" : "newFolder"
-        }
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && e.target.value.trim()) {
-            node.type === "file"
-              ? addFile(path, e.target.value.trim())
-              : addFolder(path, e.target.value.trim());
-            setCreateRequest(null);
+    return (
+      <div className="tree-row creating">
+        <span className="file-indent" />
+        <input
+          ref={inputRef}
+          className="rename-input"
+          placeholder={
+            node.type === "file" ? "newFile.ext" : "newFolder"
           }
-          if (e.key === "Escape") setCreateRequest(null);
-        }}
-        autoFocus
-      />
-    </div>
-  );
-}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && e.target.value.trim()) {
+              node.type === "file"
+                ? addFile(path, e.target.value.trim())
+                : addFolder(path, e.target.value.trim());
+              setCreateRequest(null);
+            }
+            if (e.key === "Escape") setCreateRequest(null);
+          }}
+        />
+      </div>
+    );
+  }
 
   /* ===================== FOLDER ===================== */
   if (node.type === "folder") {
@@ -91,8 +85,14 @@ export default function TreeNode({ node, path }) {
             className="tree-left"
             onClick={() => !editing && setOpen(!open)}
           >
-            <span className="arrow">{open ? "▼" : "▶"}</span>
-            <span className="icon folder-icon" />
+            <span className="arrow">
+              {open ? "▼" : "▶"}
+            </span>
+
+            {/* VS CODE STYLE FOLDER ICON */}
+            <span className="icon">
+              {getFileIcon(node.name, "folder", open)}
+            </span>
 
             {editing ? (
               <input
@@ -113,10 +113,16 @@ export default function TreeNode({ node, path }) {
 
           {!editing && (
             <div className="tree-actions">
-              <button onClick={() => setCreating("file")}>＋📄</button>
-              <button onClick={() => setCreating("folder")}>＋📁</button>
+              <button onClick={() => setCreating("file")}>
+                ＋📄
+              </button>
+              <button onClick={() => setCreating("folder")}>
+                ＋📁
+              </button>
               <button onClick={() => setEditing(true)}>✎</button>
-              <button onClick={() => deleteNode(currentPath)}>🗑</button>
+              <button onClick={() => deleteNode(currentPath)}>
+                🗑
+              </button>
             </div>
           )}
         </div>
@@ -128,12 +134,19 @@ export default function TreeNode({ node, path }) {
             <input
               ref={inputRef}
               className="rename-input"
-              placeholder={creating === "file" ? "newFile.ext" : "newFolder"}
+              placeholder={
+                creating === "file"
+                  ? "newFile.ext"
+                  : "newFolder"
+              }
               onKeyDown={(e) => {
                 if (e.key === "Enter" && e.target.value.trim()) {
                   creating === "file"
                     ? addFile(currentPath, e.target.value.trim())
-                    : addFolder(currentPath, e.target.value.trim());
+                    : addFolder(
+                        currentPath,
+                        e.target.value.trim()
+                      );
                   setCreating(null);
                   setOpen(true);
                 }
@@ -159,16 +172,17 @@ export default function TreeNode({ node, path }) {
   /* ===================== FILE ===================== */
   return (
     <div
-      className={`tree-row file ${isActive ? "active" : ""}`}
+      className={`tree-row file ${
+        isActive ? "active" : ""
+      }`}
       onClick={() => !editing && openFile(currentPath)}
     >
       <span className="file-indent" />
 
-      {meta?.icon ? (
-        <img src={meta.icon} alt={meta.label} className="file-icon-img" />
-      ) : (
-        <span className="icon file-icon" />
-      )}
+      {/* VS CODE STYLE FILE ICON */}
+      <span className="icon">
+        {getFileIcon(node.name, "file")}
+      </span>
 
       {editing ? (
         <input
@@ -185,7 +199,9 @@ export default function TreeNode({ node, path }) {
       ) : (
         <span className="name">
           {node.name}
-          {isDirty && <span className="dirty-dot">●</span>}
+          {isDirty && (
+            <span className="dirty-dot">●</span>
+          )}
         </span>
       )}
 

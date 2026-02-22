@@ -1,5 +1,6 @@
 export function connectTerminal(userId, workspaceId) {
-  const socket = new WebSocket("ws://localhost:5000");
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  const socket = new WebSocket(`ws://${backendUrl}`);
 
   socket.onopen = () => {
     socket.send(

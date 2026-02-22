@@ -1,8 +1,7 @@
 import express from "express";
 import path from "path";
-import { execInWorkspace } from "../sandbox/execService.js";
 import { auth } from "../middleware/auth.js";
-import { syncWorkspaceToDB } from "../services/syncService.js";
+import { codeQueue } from "../queue/codeQueue.js";
 
 const router = express.Router();
 
@@ -17,17 +16,18 @@ router.post("/", auth, async (req, res) => {
       workspaceId
     );
 
-    const result = await execInWorkspace({
+    const job = await codeQueue.add("run-code", {
       userId: req.user.id,
       workspaceId,
       workspacePath,
       command,
     });
 
-    // 🔥 IMPORTANT: Sync filesystem → DB
-    await syncWorkspaceToDB(req.user.id, workspaceId);
+    res.json({
+      jobId: job.id,
+      status: "queued",
+    });
 
-    res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
