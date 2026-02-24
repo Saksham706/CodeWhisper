@@ -3,8 +3,8 @@ import CppLogo from '../assets/cpplogo.png';
 import PythonLogo from '../assets/pythonlogo.png';
 import JavaLogo from '../assets/javalogo.png';
 import JsLogo from '../assets/jslogo.png';
-import HTMLlogo from '../assets/htmlLogo.png';
-import CSSlogo from '../assets/cssLogo.png';
+import HTMLlogo from '../assets/htmllogo.png';
+import CSSlogo from '../assets/csslogo.png';
 
 
 export const LANGUAGE_META = {
