@@ -1,7 +1,10 @@
+# Use official Node 20 image (multi-arch safe)
 FROM node:20-bookworm
 
+# Prevent interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Install additional runtimes & tools
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
@@ -13,16 +16,11 @@ RUN apt-get update && apt-get install -y \
     maven \
     && rm -rf /var/lib/apt/lists/*
 
+# Set working directory
 WORKDIR /workspace
 
-# copy package files first (better caching)
-COPY package*.json ./
+# Verify installations (optional but useful)
+RUN node -v && npm -v && java -version && mvn -v && python3 --version
 
-RUN npm install
-
-# copy rest of project
-COPY . .
-
-EXPOSE 10000
-
-CMD ["node", "server.js"]
+# Start bash shell
+CMD ["bash"]
