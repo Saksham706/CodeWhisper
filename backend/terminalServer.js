@@ -8,6 +8,17 @@ import { touchContainer } from "./sandbox/containerRegistry.js";
 import { createDockerPty } from "./terminal/dockerPty.js";
 import { syncWorkspaceToDB } from "./services/syncService.js";
 
+import {
+  registerTerminal,
+  getTerminal,
+  removeTerminal,
+  getAllTerminals,
+} from "./sandbox/terminalRegistry.js";
+
+function getContainerKey(userId, workspaceId) {
+  return `${userId}-${workspaceId}`;
+}
+
 export function setupTerminalServer(server) {
   const wss = new WebSocketServer({ server });
 
@@ -29,9 +40,7 @@ export function setupTerminalServer(server) {
 
     /* ================= STATE ================= */
 
-    const terminals = new Map();        // terminalId -> pty
-    const workspaceMap = new Map();     // terminalId -> workspaceId
-    const watchers = new Map();         // workspaceId -> chokidar watcher
+    const watchers = new Map(); // workspaceId -> watcher
 
     /* ================= MESSAGE HANDLER ================= */
 
@@ -44,10 +53,12 @@ export function setupTerminalServer(server) {
         return;
       }
 
-      /* ---------- CREATE TERMINAL ---------- */
+      /* ================================================= */
+      /* ================= CREATE TERMINAL ================ */
+      /* ================================================= */
+
       if (msg.type === "create") {
         const { terminalId, workspaceId } = msg;
-
         if (!terminalId || !workspaceId) return;
 
         try {
@@ -58,19 +69,24 @@ export function setupTerminalServer(server) {
             workspaceId
           );
 
+          const key = getContainerKey(userId, workspaceId);
+
           const container = await getOrCreateContainer({
-            workspaceKey: `${userId}-${workspaceId}`,
+            workspaceKey: key,
             workspacePath,
           });
 
-          touchContainer(`${userId}-${workspaceId}`);
+          touchContainer(key);
 
           const ptyProcess = createDockerPty(container.id);
 
-          terminals.set(terminalId, ptyProcess);
-          workspaceMap.set(terminalId, workspaceId);
+          registerTerminal(terminalId, {
+            pty: ptyProcess,
+            workspaceId,
+            userId,
+          });
 
-          /* ---------- FILE WATCHER (🔥 REAL FIX) ---------- */
+          /* ---------- FILE WATCHER ---------- */
           if (!watchers.has(workspaceId)) {
             const watcher = chokidar.watch(workspacePath, {
               ignoreInitial: true,
@@ -100,62 +116,161 @@ export function setupTerminalServer(server) {
             );
           });
 
+          /* ---------- EXIT HANDLER ---------- */
+          ptyProcess.onExit(async () => {
+            removeTerminal(terminalId);
+
+            try {
+              await syncWorkspaceToDB(userId, workspaceId);
+            } catch (err) {
+              console.error("Exit sync error:", err.message);
+            }
+
+            ws.send(
+              JSON.stringify({
+                type: "closed",
+                terminalId,
+              })
+            );
+          });
+
           ws.send(
             JSON.stringify({
               type: "created",
               terminalId,
+              title: "bash",
             })
           );
-
         } catch (err) {
           console.error("Terminal creation failed:", err);
         }
       }
 
-      /* ---------- INPUT ---------- */
+      /* ================================================= */
+      /* ================= INPUT ========================= */
+      /* ================================================= */
+
       if (msg.type === "input") {
-        const term = terminals.get(msg.terminalId);
-        if (term) term.write(msg.data);
+        const entry = getTerminal(msg.terminalId);
+        if (entry) {
+          entry.pty.write(msg.data);
+        }
       }
 
-      /* ---------- KILL ---------- */
-      if (msg.type === "kill") {
-        const term = terminals.get(msg.terminalId);
-        const wsId = workspaceMap.get(msg.terminalId);
+      /* ================================================= */
+      /* ================= RESIZE ======================== */
+      /* ================================================= */
 
-        if (term) term.kill();
-
-        terminals.delete(msg.terminalId);
-        workspaceMap.delete(msg.terminalId);
-
-        if (wsId) {
-          try {
-            await syncWorkspaceToDB(userId, wsId);
-          } catch (err) {
-            console.error("Kill sync failed:", err.message);
-          }
+      if (msg.type === "resize") {
+        const entry = getTerminal(msg.terminalId);
+        if (entry) {
+          entry.pty.resize(msg.cols, msg.rows);
         }
+      }
+
+      /* ================================================= */
+      /* ================= CLEAR ========================= */
+      /* ================================================= */
+
+      if (msg.type === "clear") {
+        const entry = getTerminal(msg.terminalId);
+        if (entry) {
+          entry.pty.write("clear\n");
+        }
+      }
+
+      /* ================================================= */
+      /* ================= RESTART ======================= */
+      /* ================================================= */
+
+      if (msg.type === "restart") {
+        const entry = getTerminal(msg.terminalId);
+        if (!entry) return;
+
+        const { workspaceId } = entry;
+
+        entry.pty.kill();
+        removeTerminal(msg.terminalId);
+
+        const workspacePath = path.join(
+          process.cwd(),
+          process.env.WORKSPACES_ROOT || "workspaces",
+          userId,
+          workspaceId
+        );
+
+        const key = getContainerKey(userId, workspaceId);
+
+        const container = await getOrCreateContainer({
+          workspaceKey: key,
+          workspacePath,
+        });
+
+        const newPty = createDockerPty(container.id);
+
+        registerTerminal(msg.terminalId, {
+          pty: newPty,
+          workspaceId,
+          userId,
+        });
+
+        newPty.onData((data) => {
+          ws.send(
+            JSON.stringify({
+              type: "output",
+              terminalId: msg.terminalId,
+              data,
+            })
+          );
+        });
+      }
+
+      /* ================================================= */
+      /* ================= KILL ========================== */
+      /* ================================================= */
+
+      if (msg.type === "kill") {
+        const entry = getTerminal(msg.terminalId);
+        if (!entry) return;
+
+        entry.pty.kill();
+        removeTerminal(msg.terminalId);
+
+        try {
+          await syncWorkspaceToDB(userId, entry.workspaceId);
+        } catch (err) {
+          console.error("Kill sync failed:", err.message);
+        }
+
+        ws.send(
+          JSON.stringify({
+            type: "closed",
+            terminalId: msg.terminalId,
+          })
+        );
       }
     });
 
-    /* ================= SOCKET CLOSE ================= */
+    /* ================================================= */
+    /* ================= SOCKET CLOSE ================== */
+    /* ================================================= */
 
     ws.on("close", async () => {
       try {
-        // Kill all terminals
-        for (const term of terminals.values()) {
-          term.kill();
+        // Kill all terminals of this connection
+        for (const [id, entry] of getAllTerminals()) {
+          if (entry.userId === userId) {
+            entry.pty.kill();
+            removeTerminal(id);
+          }
         }
 
-        // Close all watchers
+        // Close watchers
         for (const watcher of watchers.values()) {
           await watcher.close();
         }
 
-        terminals.clear();
-        workspaceMap.clear();
         watchers.clear();
-
       } catch (err) {
         console.error("Terminal cleanup failed:", err.message);
       }

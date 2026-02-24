@@ -37,6 +37,7 @@ router.post("/", auth, async (req, res) => {
       jobId: job.id,
       type: detected.type,
       port: detected.port || null,
+      workspaceId,
     });
 
   } catch (err) {

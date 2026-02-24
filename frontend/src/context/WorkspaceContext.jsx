@@ -54,66 +54,69 @@ export function WorkspaceProvider({ userId, workspaceId, children }) {
 
   /* ================= WEBSOCKET ================= */
 
-  useEffect(() => {
-    if (!userId || !workspaceId || !accessToken) return;
+useEffect(() => {
+  if (!userId || !workspaceId || !accessToken) return;
 
-    const ws = new WebSocket(
-      `${backendUrl}/ws?token=${accessToken}`
+  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+  const host = backendUrl.replace(/^https?:\/\//, "");
+
+  const ws = new WebSocket(
+    `${protocol}://${host}?token=${accessToken}`
+  );
+
+  socketRef.current = ws;
+
+  ws.onopen = () => {
+    wsReadyRef.current = true;
+  };
+
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+
+    if (msg.type === "output") {
+      window.dispatchEvent(
+        new CustomEvent("terminal-output", { detail: msg })
+      );
+    }
+
+   if (msg.type === "created") {
+  setTerminals((prev) =>
+    prev.some((t) => t.id === msg.terminalId)
+      ? prev
+      : [...prev, { id: msg.terminalId }]
+  );
+
+  setActiveTerminal(msg.terminalId);
+
+  // 🔥 RUN PENDING COMMAND
+  if (pendingRunRef.current) {
+    socketRef.current.send(
+      JSON.stringify({
+        type: "input",
+        terminalId: msg.terminalId,
+        data: pendingRunRef.current,
+      })
     );
 
-    socketRef.current = ws;
+    pendingRunRef.current = null;
+  }
+}
 
-    ws.onopen = () => {
-      wsReadyRef.current = true;
+    if (msg.type === "closed") {
+      setTerminals((prev) =>
+        prev.filter((t) => t.id !== msg.terminalId)
+      );
+    }
+  };
 
-      if (pendingCreateRef.current) {
-        ws.send(JSON.stringify(pendingCreateRef.current));
-        pendingCreateRef.current = null;
-      }
-    };
+  ws.onclose = () => {
+    wsReadyRef.current = false;
+  };
 
-    ws.onmessage = (e) => {
-      const msg = JSON.parse(e.data);
-
-      if (msg.type === "output") {
-        window.dispatchEvent(
-          new CustomEvent("terminal-output", { detail: msg })
-        );
-
-        clearTimeout(refreshTimeoutRef.current);
-        refreshTimeoutRef.current = setTimeout(() => {
-          loadWorkspace();
-        }, 500);
-      }
-
-      if (msg.type === "created") {
-        setTerminals((prev) =>
-          prev.some((t) => t.id === msg.terminalId)
-            ? prev
-            : [...prev, { id: msg.terminalId }]
-        );
-
-        setActiveTerminal(msg.terminalId);
-
-        if (pendingRunRef.current) {
-          ws.send(
-            JSON.stringify({
-              type: "input",
-              terminalId: msg.terminalId,
-              data: pendingRunRef.current,
-            })
-          );
-          pendingRunRef.current = null;
-        }
-      }
-    };
-
-    return () => {
-      wsReadyRef.current = false;
-      socketRef.current = null;
-      ws.close();
-    };
-  }, [userId, workspaceId, accessToken]);
+  return () => {
+    ws.close();
+  };
+}, [userId, workspaceId, accessToken]);
 
   const sendWS = (payload) => {
     if (socketRef.current?.readyState === WebSocket.OPEN) {
@@ -127,7 +130,6 @@ export function WorkspaceProvider({ userId, workspaceId, children }) {
     const payload = {
       type: "create",
       terminalId,
-      userId,
       workspaceId,
     };
 
@@ -327,7 +329,6 @@ const renameNode = async (oldPath, newName) => {
        sendWS({
          type: "create",
          terminalId,
-         userId,
          workspaceId,
        });
        return;
@@ -340,47 +341,31 @@ const renameNode = async (oldPath, newName) => {
   /* ================= RUN PROJECT ================= */
 
 const runProject = async () => {
-    setShowTerminal(true);
+  setShowTerminal(true);
 
-    const res = await fetch(
-      `${backendUrl}/api/execute`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          workspaceId,
-          command: "npm install && npm start",
-        }),
-      }
-    );
+  const res = await fetch(`${backendUrl}/api/run`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ workspaceId }),
+  });
 
-    const { jobId } = await res.json();
+  const data = await res.json();
 
-    const poll = setInterval(async () => {
-      const jobRes = await fetch(
-        `${backendUrl}/api/jobs/${jobId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+  if (data.jobId) {
+    const terminalId = `project_${workspaceId}`;
 
-      const jobData = await jobRes.json();
+    sendWS({
+      type: "create",
+      terminalId,
+      workspaceId,
+    });
 
-      if (jobData.state === "completed") {
-        clearInterval(poll);
-        await loadWorkspace();
-
-        if (jobData.result?.output) {
-          setShowTerminal(true);
-        }
-      }
-    }, 1000);
-  };
+    setActiveTerminal(terminalId);
+  }
+};
 
 
   /* ================= PREVIEW ================= */

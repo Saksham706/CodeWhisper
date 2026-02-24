@@ -1,15 +1,18 @@
 import pty from "node-pty";
 
 export function createDockerPty(containerId) {
-  return pty.spawn("docker", [
-    "exec",
-    "-it",
-    containerId,
-    "bash"
-  ], {
-    name: "xterm-color",
-    cols: 80,
-    rows: 24,
-    env: process.env,
-  });
+  return pty.spawn(
+    "docker",
+    ["exec", "-it", containerId, "bash"],
+    {
+      name: "xterm-256color",
+      cols: 120,
+      rows: 30,
+      cwd: process.cwd(),
+      env: {
+        ...process.env,
+        TERM: "xterm-256color",
+      },
+    }
+  );
 }

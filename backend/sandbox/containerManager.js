@@ -10,6 +10,10 @@ import {
 
 const docker = new Docker();
 
+function getContainerKey(userId, workspaceId) {
+  return `${userId}-${workspaceId}`;
+}
+
 export async function getOrCreateContainer({
   workspaceKey,
   workspacePath,

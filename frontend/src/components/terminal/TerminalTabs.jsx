@@ -7,9 +7,39 @@ export default function TerminalTabs() {
     activeTerminal,
     setActiveTerminal,
     killTerminal,
+    socketRef,
   } = useWorkspace();
 
   if (!terminals.length) return null;
+
+  const send = (payload) => {
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify(payload));
+    }
+  };
+
+  const stopProcess = (terminalId) => {
+    // Ctrl + C
+    send({
+      type: "input",
+      terminalId,
+      data: "\x03",
+    });
+  };
+
+  const restartTerminal = (terminalId) => {
+    send({
+      type: "restart",
+      terminalId,
+    });
+  };
+
+  const clearTerminal = (terminalId) => {
+    send({
+      type: "clear",
+      terminalId,
+    });
+  };
 
   return (
     <div className="terminal-tabs">
@@ -21,16 +51,52 @@ export default function TerminalTabs() {
           }`}
           onClick={() => setActiveTerminal(t.id)}
         >
-          Terminal {i + 1}
-          <span
-            className="close-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              killTerminal(t.id);
-            }}
-          >
-            ✕
+          <span className="terminal-title">
+            Terminal {i + 1}
           </span>
+
+          <div className="terminal-actions">
+            <button
+              title="Stop"
+              onClick={(e) => {
+                e.stopPropagation();
+                stopProcess(t.id);
+              }}
+            >
+              🛑
+            </button>
+
+            <button
+              title="Restart"
+              onClick={(e) => {
+                e.stopPropagation();
+                restartTerminal(t.id);
+              }}
+            >
+              🔄
+            </button>
+
+            <button
+              title="Clear"
+              onClick={(e) => {
+                e.stopPropagation();
+                clearTerminal(t.id);
+              }}
+            >
+              🧹
+            </button>
+
+            <button
+              title="Kill"
+              className="kill-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                killTerminal(t.id);
+              }}
+            >
+              ✕
+            </button>
+          </div>
         </div>
       ))}
     </div>

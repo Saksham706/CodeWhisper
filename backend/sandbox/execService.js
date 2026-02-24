@@ -1,7 +1,7 @@
 import { getOrCreateContainer } from "./containerManager.js";
 import { touchContainer } from "./containerRegistry.js";
 
-function buildKey(userId, workspaceId) {
+function getContainerKey(userId, workspaceId) {
   return `${userId}-${workspaceId}`;
 }
 
@@ -12,7 +12,7 @@ export async function execInWorkspace({
   command,
   detach = false,
 }) {
-  const key = buildKey(userId, workspaceId);
+  const key = `${userId}-${workspaceId}`;
 
   const container = await getOrCreateContainer({
     workspaceKey: key,
@@ -21,7 +21,7 @@ export async function execInWorkspace({
 
   touchContainer(key);
 
-  const exec = await container.exec({
+  const execInstance = await container.exec({
     Cmd: ["bash", "-lc", command],
     AttachStdout: true,
     AttachStderr: true,
@@ -29,7 +29,15 @@ export async function execInWorkspace({
     WorkingDir: "/workspace",
   });
 
-  const stream = await exec.start({ hijack: true, stdin: false });
+  if (detach) {
+    await execInstance.start({ hijack: true, stdin: false });
+    return { started: true };
+  }
+
+  const stream = await execInstance.start({
+    hijack: true,
+    stdin: false,
+  });
 
   return new Promise((resolve, reject) => {
     let output = "";

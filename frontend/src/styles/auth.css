@@ -360,22 +360,145 @@
   100% { transform: rotate(360deg); }
 }
 
-/* =========================
-   RESPONSIVE
-========================= */
+/* =========================================
+   RESPONSIVE DESIGN - AUTH PAGES
+========================================= */
 
-@media (max-width: 480px) {
+/* ========== LARGE TABLETS (≤ 1024px) ========== */
+@media (max-width: 1024px) {
+
   .auth-card,
   .oauth-success-card {
-    width: 90%;
-    padding: 22px;
+    width: 420px;
+  }
+
+  .auth-logo img {
+    width: 170px;
+  }
+
+  .auth-card h2 {
+    font-size: 22px;
+  }
+}
+
+
+/* ========== TABLETS (≤ 768px) ========== */
+@media (max-width: 768px) {
+
+  .auth-page,
+  .oauth-success-container {
+    padding: 30px 20px;
+    align-items: center;
+  }
+
+  .auth-card,
+  .oauth-success-card {
+    width: 100%;
+    max-width: 420px;
+    padding: 26px 24px;
+  }
+
+  .auth-logo img {
+    width: 160px;
+  }
+
+  .auth-card input,
+  .phone-group select {
+    font-size: 15px;
+  }
+
+  .primary-btn,
+  .google-btn {
+    font-size: 15px;
+  }
+
+  .auth-switch {
+    text-align: center;
+  }
+}
+
+
+/* ========== MOBILE (≤ 480px) ========== */
+@media (max-width: 480px) {
+
+  .auth-page,
+  .oauth-success-container {
+    padding: 20px 16px;
+  }
+
+  .auth-card,
+  .oauth-success-card {
+    width: 100%;
+    padding: 22px 18px;
+    border-radius: 12px;
+  }
+
+  .auth-logo img {
+    width: 140px;
+    max-height: 90px;
+  }
+
+  .auth-card h2 {
+    font-size: 18px;
+  }
+
+  .auth-card input,
+  .phone-group select {
+    padding: 11px;
+    font-size: 14px;
   }
 
   .phone-group {
     flex-direction: column;
+    gap: 8px;
   }
 
   .phone-group select {
     width: 100%;
+  }
+
+  .primary-btn {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .google-btn {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .auth-forgot {
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  .auth-divider {
+    margin: 14px 0;
+  }
+}
+
+
+/* ========== SMALL MOBILE (≤ 360px) ========== */
+@media (max-width: 360px) {
+
+  .auth-card,
+  .oauth-success-card {
+    padding: 18px 14px;
+  }
+
+  .auth-card input,
+  .phone-group select {
+    font-size: 13px;
+    padding: 10px;
+  }
+
+  .primary-btn,
+  .google-btn {
+    font-size: 13px;
+    padding: 10px;
+  }
+
+  .auth-card h2 {
+    font-size: 16px;
   }
 }

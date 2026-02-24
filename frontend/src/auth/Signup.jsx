@@ -13,6 +13,7 @@ export default function Signup() {
     confirmPassword: "",
   });
 
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -38,7 +39,7 @@ export default function Signup() {
     };
 
     try {
-      const res = await fetch("http://localhost:8000/api/auth/signup", {
+      const res = await fetch(`${backendUrl}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

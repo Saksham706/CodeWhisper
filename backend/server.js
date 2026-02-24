@@ -76,7 +76,7 @@ app.use(
 const server = http.createServer(app);
 setupTerminalServer(server);
 
- const PORT = process.env.PORT || 8000;
+ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () =>
   console.log(`Backend running on http://localhost:${PORT}`)
 );

@@ -410,3 +410,170 @@
   opacity: 0.5;
 }
 
+/* =========================================
+   RESPONSIVE DESIGN
+========================================= */
+
+/* ========== LARGE TABLETS (≤ 1024px) ========== */
+@media (max-width: 1024px) {
+
+  .hero h1 {
+    font-size: 42px;
+  }
+
+  .use-grid,
+  .difference-grid {
+    grid-template-columns: repeat(2, 1fr); /* 2 cards */
+    gap: 30px;
+  }
+
+  .stats {
+    gap: 20px;
+  }
+
+  .final-title {
+    font-size: 36px;
+  }
+}
+
+
+/* ========== TABLETS (≤ 768px) ========== */
+@media (max-width: 768px) {
+
+  /* NAVBAR */
+  .landing-nav {
+    padding: 18px 24px;
+  }
+
+  .landing-nav img {
+    width: 120px;
+  }
+
+  /* HERO */
+  .hero {
+    margin: 70px auto 60px;
+    padding: 0 20px;
+  }
+
+  .hero h1 {
+    font-size: 34px;
+  }
+
+  .hero p {
+    font-size: 16px;
+  }
+
+  /* STATS */
+  .stats {
+    padding: 0 20px;
+  }
+
+  .stat {
+    padding: 22px;
+  }
+
+  .stat h3 {
+    font-size: 26px;
+  }
+
+  /* USE CASES */
+  .use-cases {
+    padding: 80px 20px 100px;
+  }
+
+  .use-grid {
+    grid-template-columns: 1fr; /* 1 column */
+  }
+
+  /* DIFFERENCE */
+  .difference {
+    padding: 80px 20px 100px;
+  }
+
+  .difference-grid {
+    grid-template-columns: 1fr; /* 1 column */
+  }
+
+  /* FINAL CTA */
+  .final-cta {
+    padding: 100px 20px 120px;
+  }
+
+  .final-title {
+    font-size: 30px;
+  }
+
+  .final-subtitle {
+    font-size: 15px;
+  }
+
+  /* FOOTER */
+  .footer {
+    padding: 50px 20px 30px;
+  }
+
+  .footer-container {
+    gap: 30px;
+  }
+}
+
+
+/* ========== MOBILE (≤ 480px) ========== */
+@media (max-width: 480px) {
+
+  /* NAV */
+  .landing-nav {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .primary-btn {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+
+  /* HERO */
+  .hero h1 {
+    font-size: 26px;
+  }
+
+  .hero p {
+    font-size: 14px;
+  }
+
+  /* STATS */
+  .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-header {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  /* CARDS */
+  .use-card,
+  .difference-card {
+    padding: 26px 20px;
+  }
+
+  /* FINAL CTA */
+  .final-title {
+    font-size: 24px;
+  }
+
+  .final-primary {
+    width: 100%;
+    padding: 12px;
+  }
+
+  /* FOOTER */
+  .footer-container {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .footer a:hover {
+    transform: none;
+  }
+}
