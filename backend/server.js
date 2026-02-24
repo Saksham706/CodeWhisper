@@ -54,6 +54,9 @@ app.use(passport.initialize());
 connectDB();
 startContainerReaper();
 
+app.get("/",(req,res) =>{
+  res.send("CodeWhisper Backend is running");
+})
 /* ================= ROUTES ================= */
 
 app.use("/api/auth", authRoutes);
