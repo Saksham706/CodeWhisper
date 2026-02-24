@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from "react";
 import { getWorkspace } from "../services/workspaceApi";
 
 import Sidebar from "../components/layout/Sidebar";
-import Navbar from "../components/layout/Navbar";
+import Navbar from "../components/layout/navbar";
 import EditorTabs from "../components/editor/EditorTabs";
 import CodeEditor from "../components/editor/CodeEditor";
 import RunBar from "../components/editor/RunBar";
