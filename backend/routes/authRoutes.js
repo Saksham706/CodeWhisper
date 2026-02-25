@@ -32,8 +32,9 @@ router.get(
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: true,           
+      sameSite: "none",       
+      path: "/",
     });
 
     res.redirect(`${FRONTEND_URL}/oauth-success?token=${accessToken}`);

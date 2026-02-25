@@ -57,8 +57,9 @@ export async function login(req, res) {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: false, // true in production (HTTPS)
-      sameSite: "lax", // better for dev
+      secure: true,         
+      sameSite: "none",       
+      path: "/",
     });
 
     res.json({
@@ -203,8 +204,9 @@ export async function refreshToken(req, res) {
 
     res.cookie("refreshToken", newRefreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: true,           // must be true in HTTPS
+      sameSite: "none",       // REQUIRED for cross-domain
+      path: "/",
     });
 
     res.json({
@@ -225,7 +227,7 @@ export async function refreshToken(req, res) {
 
 export async function logout(req, res) {
   try {
-    const token = req.cookies.refreshToken;
+    const token = req.s.refreshToken;
 
     if (token) {
       const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
