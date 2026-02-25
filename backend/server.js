@@ -23,6 +23,7 @@ import { setupTerminalServer } from "./terminalServer.js";
 import { startContainerReaper } from "./sandbox/containerReaper.js";
 
 const app = express();
+app.set("trust proxy", 1);
 
 /* ================= SECURITY ================= */
 
