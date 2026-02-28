@@ -192,6 +192,9 @@ export async function refreshToken(req, res) {
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
 
     const user = await User.findById(decoded.id);
+      // 🔥 ADD THESE LOGS HERE
+    console.log("Cookie token:", token);
+    console.log("DB token:", user?.refreshToken);
     if (!user || user.refreshToken !== token) {
       return res.status(403).json({ error: "Invalid refresh token" });
     }
@@ -204,8 +207,8 @@ export async function refreshToken(req, res) {
 
     res.cookie("refreshToken", newRefreshToken, {
       httpOnly: true,
-      secure: true,           // must be true in HTTPS
-      sameSite: "none",       // REQUIRED for cross-domain
+      secure: true,         
+      sameSite: "none",       
       path: "/",
     });
 

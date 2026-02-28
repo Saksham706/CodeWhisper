@@ -27,7 +27,15 @@ app.set("trust proxy", 1);
 
 /* ================= SECURITY ================= */
 
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        frameAncestors: ["'self'", "http://localhost:5173"], 
+      },
+    },
+  })
+);
 
 app.use(
   rateLimit({
