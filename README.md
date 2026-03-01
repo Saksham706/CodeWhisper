@@ -145,34 +145,34 @@ cd backend
 npm install
 ```
 ### 🔌 Environment Requirements
- -Node.js v18+
- -MongoDB
- -Redis
- -Docker
- -npm
+ - Node.js v18+
+ - MongoDB
+ - Redis
+ - Docker
+ - npm
 
 ### ⚙️ How Code Execution Works
- -User writes code in Monaco Editor
- -Code is sent to backend
- -Job is added to BullMQ queue
- -Worker picks the job
- -Docker container is created
- -Code is executed securely inside the container
- -Output is returned via WebSocket
+ - User writes code in Monaco Editor
+ - Code is sent to backend
+ - Job is added to BullMQ queue
+ - Worker picks the job
+ - Docker container is created
+ - Code is executed securely inside the container
+ - Output is returned via WebSocket
 
 ### 📡 Real-Time Terminal
- -xterm.js (Frontend)
- -node-pty (Backend)
- -WebSocket Communication
- -Container-level Shell Access
+ - xterm.js (Frontend)
+ - node-pty (Backend)
+ - WebSocket Communication
+ - Container-level Shell Access
 
 ### 📈 Future Improvements
- -🤝 Collaborative Coding
- -🤖 AI Code Assistant
- -🔄 Git Integration
- -📦 Project Templates
- -☁️ Deployment Integration
- -🎨 Dark/Light Themes
+ - 🤝 Collaborative Coding
+ - 🤖 AI Code Assistant
+ - 🔄 Git Integration
+ - 📦 Project Templates
+ - ☁️ Deployment Integration
+ - 🎨 Dark/Light Themes
 
 ### 🧑‍💻 Author
 Saksham Agarwal
@@ -180,20 +180,20 @@ Full Stack Developer
 MERN | Docker | Redis | System Design | Cloud Platforms
 
 ### 🤝 Contributing
- -Fork the repository
- -Create your feature branch (git checkout -b feature/AmazingFeature)
- -Commit your changes (git commit -m 'Add some AmazingFeature')
- -Push to the branch (git push origin feature/AmazingFeature)
- -Open a Pull Request
+ - Fork the repository
+ - Create your feature branch (git checkout -b feature/AmazingFeature)
+ - Commit your changes (git commit -m 'Add some AmazingFeature')
+ - Push to the branch (git push origin feature/AmazingFeature)
+ - Open a Pull Request
 
 ### 📜 License
 Licensed under the ISC License.
 
 ### ⭐ Support
-If you like this project:
-⭐ Star the repository
-🍴 Fork it
-🛠️ Contribute
+ - If you like this project:
+ - ⭐ Star the repository
+ - 🍴 Fork it
+ - 🛠️ Contribute
 
 ### 💡 Vision
 CodeWhisper.AI aims to become a complete cloud development environment where anyone can code, build, test, and deploy applications directly from the browser — without worrying about system setup.
