@@ -64,8 +64,7 @@ Supports execution of:
 ---
 
 ## 📁 Project Structure
-
-
+```
 CodeWhisper/
 │
 ├── backend/
@@ -100,7 +99,7 @@ CodeWhisper/
 │ ├── App.jsx
 │ └── main.jsx
 
----
+```
 
 ## 🛠️ Tech Stack
 
@@ -176,10 +175,11 @@ npm install
  - 🎨 Dark/Light Themes
 
 ### 🧑‍💻 Author
-Saksham Agarwal
-Full Stack Developer
-MERN | Docker | Redis | System Design | Cloud Platforms
-
+```
+  Saksham Agarwal
+  Full Stack Developer
+  MERN | Docker | Redis | System Design | Cloud Platforms
+```
 ### 🤝 Contributing
  - Fork the repository
  - Create your feature branch (git checkout -b feature/AmazingFeature)
