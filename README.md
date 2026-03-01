@@ -65,6 +65,7 @@ Supports execution of:
 
 ## 📁 Project Structure
 
+
 CodeWhisper/
 │
 ├── backend/
