@@ -1,4 +1,4 @@
-<img width="1896" height="804" alt="Screenshot 2026-03-01 124951" src="https://github.com/user-attachments/assets/85d97349-7e83-4213-9703-2a193a3bc466" /># 🚀 CodeWhisper.AI
+# 🚀 CodeWhisper.AI
 
 > A Cloud-Based Coding Platform – Write, Run & Build Projects Without Installing Anything.
 
@@ -69,6 +69,7 @@ Supports execution of:
 <img width="1893" height="863" alt="Screenshot 2026-03-01 124821" src="https://github.com/user-attachments/assets/da501d2e-9674-44a6-8ea5-6d1ad6267fec" />
 <img width="1888" height="854" alt="Screenshot 2026-03-01 124828" src="https://github.com/user-attachments/assets/ac96791c-8e0d-407a-af83-87db0c227e8d" />
 <img width="1889" height="864" alt="Screenshot 2026-03-01 124835" src="https://github.com/user-attachments/assets/32cc21e0-1cb9-43fd-996d-9d386f95dd0f" />
+<img width="1896" height="804" alt="Screenshot 2026-03-01 124951" src="https://github.com/user-attachments/assets/85d97349-7e83-4213-9703-2a193a3bc466" />
 <img width="587" height="827" alt="Screenshot 2026-03-01 124855" src="https://github.com/user-attachments/assets/7cc84a8b-087c-43be-be31-0529499428e2" />
 <img width="1896" height="804" alt="Screenshot 2026-03-01 124951" src="https://github.com/user-attachments/assets/77da4482-ea5d-4a4c-b920-67157538c7b1" />
 <img width="1919" height="833" alt="Screenshot 2026-03-01 125059" src="https://github.com/user-attachments/assets/cf744421-d0f0-4b7e-83bb-743207aadd3e" />
