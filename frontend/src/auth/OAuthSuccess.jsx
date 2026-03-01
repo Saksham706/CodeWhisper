@@ -7,13 +7,21 @@ export default function OAuthSuccess() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const token = params.get("token");
-    if (token) {
-      login(token);
+useEffect(() => {
+  const completeLogin = async () => {
+    try {
+      const { data } = await api.post("/auth/refresh-token");
+
+      login(data.accessToken, data.user);
       navigate("/dashboard");
+
+    } catch {
+      navigate("/login");
     }
-  }, []);
+  };
+
+  completeLogin();
+}, []);
 
   return <p>Logging you in...</p>;
 }

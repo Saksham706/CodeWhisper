@@ -17,7 +17,11 @@ router.post("/login", login);
 
 router.get(
   "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    prompt: "consent",       
+    accessType: "offline",
+  })
 );
 
 router.get(
@@ -30,14 +34,15 @@ router.get(
     req.user.refreshToken = refreshToken;
     await req.user.save();
 
-    res.cookie("refreshToken", refreshToken, {
+   res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: "none",
+      secure: process.env.NODE_ENV === "production",
+      sameSite:
+        process.env.NODE_ENV === "production" ? "none" : "lax",
       path: "/",
     });
 
-    res.redirect(`${FRONTEND_URL}/oauth-success?token=${accessToken}`);
+    res.redirect(`${FRONTEND_URL}/oauth-success`);
   }
 );
 

@@ -190,11 +190,8 @@ export async function refreshToken(req, res) {
     if (!token) return res.status(401).json({ error: "No refresh token" });
 
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-
     const user = await User.findById(decoded.id);
-      // 🔥 ADD THESE LOGS HERE
-    console.log("Cookie token:", token);
-    console.log("DB token:", user?.refreshToken);
+
     if (!user || user.refreshToken !== token) {
       return res.status(403).json({ error: "Invalid refresh token" });
     }
@@ -205,10 +202,10 @@ export async function refreshToken(req, res) {
     user.refreshToken = newRefreshToken;
     await user.save();
 
-    res.cookie("refreshToken", refreshToken, {
+    res.cookie("refreshToken", newRefreshToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: "none",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       path: "/",
     });
 
