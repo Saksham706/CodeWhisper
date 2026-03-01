@@ -20,9 +20,9 @@ It provides a **VS Code-like workspace environment** where users can:
 
 ---
 
-# ✨ Features
+## ✨ Features
 
-## 🖥️ Cloud IDE
+### 🖥️ Cloud IDE
 - Monaco Editor (VS Code Editor Engine)
 - Syntax Highlighting
 - File Explorer like VS Code
@@ -30,12 +30,8 @@ It provides a **VS Code-like workspace environment** where users can:
 - Real-time Editing
 - Auto Scroll & Multi Tabs
 
----
-
-## 💻 Multi-Language Support
-
+### 💻 Multi-Language Support
 Supports execution of:
-
 - HTML
 - CSS
 - JavaScript
@@ -44,19 +40,13 @@ Supports execution of:
 - C
 - Python
 
----
-
-## 🐳 Secure Code Execution
-
+### 🐳 Secure Code Execution
 - Docker-based sandboxed execution
 - Isolated containers for each user
 - Secure runtime environment
 - Background worker execution using BullMQ
 
----
-
-## 🔐 Authentication & Security
-
+### 🔐 Authentication & Security
 - JWT Authentication
 - Google OAuth 2.0
 - Password Hashing (bcrypt)
@@ -65,16 +55,15 @@ Supports execution of:
 - Helmet Security
 - Email Verification (Nodemailer)
 
----
-
-## 🖥️ Integrated Terminal
-
+### 🖥️ Integrated Terminal
 - xterm.js powered terminal
 - node-pty backend
 - WebSocket real-time communication
 - Container-level shell access
 
 ---
+
+## 📁 Project Structure
 
 CodeWhisper/
 │
@@ -110,12 +99,11 @@ CodeWhisper/
 │ ├── App.jsx
 │ └── main.jsx
 
-
 ---
 
-# 🛠️ Tech Stack
+## 🛠️ Tech Stack
 
-## 🔹 Frontend
+### 🔹 Frontend
 - React 19
 - Vite (Rolldown Vite)
 - Tailwind CSS
@@ -125,7 +113,7 @@ CodeWhisper/
 - JWT Decode
 - xterm.js
 
-## 🔹 Backend
+### 🔹 Backend
 - Node.js (ES Modules)
 - Express 5
 - MongoDB (Mongoose)
@@ -140,102 +128,72 @@ CodeWhisper/
 
 ---
 
-# 🚀 Installation & Setup
+## 🚀 Installation & Setup
 
----
-
-## 1️⃣ Clone the Repository
+### 1️⃣ Clone the Repository
 
 ```bash
+
 git clone https://github.com/your-username/codeWhisper.AI.git
 cd codeWhisper.AI
 
----
+```
 
-## 2️⃣ Backend Setup
-
+ ### 2️⃣ Backend Setup
 ```bash
 cd backend
 npm install
+```
+### 🔌 Environment Requirements
+ -Node.js v18+
+ -MongoDB
+ -Redis
+ -Docker
+ -npm
 
----
+### ⚙️ How Code Execution Works
+ -User writes code in Monaco Editor
+ -Code is sent to backend
+ -Job is added to BullMQ queue
+ -Worker picks the job
+ -Docker container is created
+ -Code is executed securely inside the container
+ -Output is returned via WebSocket
 
-# 🔌 Environment Requirements
+### 📡 Real-Time Terminal
+ -xterm.js (Frontend)
+ -node-pty (Backend)
+ -WebSocket Communication
+ -Container-level Shell Access
 
-- Node.js v18+
-- MongoDB
-- Redis
-- Docker
-- npm
+### 📈 Future Improvements
+ -🤝 Collaborative Coding
+ -🤖 AI Code Assistant
+ -🔄 Git Integration
+ -📦 Project Templates
+ -☁️ Deployment Integration
+ -🎨 Dark/Light Themes
 
----
+### 🧑‍💻 Author
+Saksham Agarwal
+Full Stack Developer
+MERN | Docker | Redis | System Design | Cloud Platforms
 
-# ⚙️ How Code Execution Works
+### 🤝 Contributing
+ -Fork the repository
+ -Create your feature branch (git checkout -b feature/AmazingFeature)
+ -Commit your changes (git commit -m 'Add some AmazingFeature')
+ -Push to the branch (git push origin feature/AmazingFeature)
+ -Open a Pull Request
 
-1. User writes code in **Monaco Editor**
-2. Code is sent to backend
-3. Job is added to **BullMQ queue**
-4. Worker picks the job
-5. Docker container is created
-6. Code is executed securely inside the container
-7. Output is returned via WebSocket
-
----
-
-# 📡 Real-Time Terminal
-
-- xterm.js (Frontend)
-- node-pty (Backend)
-- WebSocket Communication
-- Container-level Shell Access
-
----
-
-# 📈 Future Improvements
-
-- 🤝 Collaborative Coding
-- 🤖 AI Code Assistant
-- 🔄 Git Integration
-- 📦 Project Templates
-- ☁️ Deployment Integration
-- 🎨 Dark/Light Themes
-- 👥 Role-Based Access Control
-
----
-
-# 🧑‍💻 Author
-
-**Saksham Agarwal**  
-Full Stack Developer  
-MERN | Docker | Redis | System Design | Cloud Platforms  
-
----
-
-# 🤝 Contributing
-
-Contributions are welcome!
-
-```bash
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to your branch
-5. Open a Pull Request
-
-📜 License
-
+### 📜 License
 Licensed under the ISC License.
 
-⭐ Support
-
+### ⭐ Support
 If you like this project:
-
 ⭐ Star the repository
-
 🍴 Fork it
-
 🛠️ Contribute
 
-💡 Vision
-
+### 💡 Vision
 CodeWhisper.AI aims to become a complete cloud development environment where anyone can code, build, test, and deploy applications directly from the browser — without worrying about system setup.
