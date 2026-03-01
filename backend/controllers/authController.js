@@ -55,10 +55,10 @@ export async function login(req, res) {
     user.refreshToken = refreshToken;
     await user.save();
 
-    res.cookie("refreshToken", refreshToken, {
+   res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true,         
-      sameSite: "none",       
+      secure: true,
+      sameSite: "none",
       path: "/",
     });
 
@@ -205,10 +205,10 @@ export async function refreshToken(req, res) {
     user.refreshToken = newRefreshToken;
     await user.save();
 
-    res.cookie("refreshToken", newRefreshToken, {
+    res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true,         
-      sameSite: "none",       
+      secure: true,
+      sameSite: "none",
       path: "/",
     });
 
