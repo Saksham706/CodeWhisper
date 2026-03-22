@@ -1,4 +1,4 @@
-# 🚀 CodeWhisper.AI
+# 🚀 VocodeAI
 
 > A Cloud-Based Coding Platform – Write, Run & Build Projects Without Installing Anything.
 
@@ -6,7 +6,7 @@
 
 ## 🌐 Overview
 
-**CodeWhisper.AI** is a powerful cloud-based coding platform that allows users to write and execute code directly from the browser — without installing compilers, SDKs, or dependencies like C++, JDK, Python, etc.
+**VocodeAI** is a powerful cloud-based coding platform that allows users to write and execute code directly from the browser — without installing compilers, SDKs, or dependencies like C++, JDK, Python, etc.
 
 It provides a **VS Code-like workspace environment** where users can:
 
@@ -64,19 +64,16 @@ Supports execution of:
 ---
 
 ## Images 
-
-<img width="1894" height="870" alt="Screenshot 2026-03-01 124809" src="https://github.com/user-attachments/assets/cd76a9ab-bd9b-44c6-aac1-417207f02275" />
-<img width="1893" height="863" alt="Screenshot 2026-03-01 124821" src="https://github.com/user-attachments/assets/da501d2e-9674-44a6-8ea5-6d1ad6267fec" />
-<img width="1888" height="854" alt="Screenshot 2026-03-01 124828" src="https://github.com/user-attachments/assets/ac96791c-8e0d-407a-af83-87db0c227e8d" />
-<img width="1889" height="864" alt="Screenshot 2026-03-01 124835" src="https://github.com/user-attachments/assets/32cc21e0-1cb9-43fd-996d-9d386f95dd0f" />
-<img width="1896" height="804" alt="Screenshot 2026-03-01 124951" src="https://github.com/user-attachments/assets/85d97349-7e83-4213-9703-2a193a3bc466" />
-<img width="587" height="827" alt="Screenshot 2026-03-01 124855" src="https://github.com/user-attachments/assets/7cc84a8b-087c-43be-be31-0529499428e2" />
-<img width="1896" height="804" alt="Screenshot 2026-03-01 124951" src="https://github.com/user-attachments/assets/77da4482-ea5d-4a4c-b920-67157538c7b1" />
-<img width="1919" height="833" alt="Screenshot 2026-03-01 125059" src="https://github.com/user-attachments/assets/cf744421-d0f0-4b7e-83bb-743207aadd3e" />
+<img width="1882" height="820" alt="Screenshot 2026-03-22 123313" src="https://github.com/user-attachments/assets/08b1dbab-adc1-423e-8aa1-7af6da2b168a"/>
+<img width="1877" height="793" alt="Screenshot 2026-03-22 123325" src="https://github.com/user-attachments/assets/12a94d9d-1bc0-48b9-96c4-e3c4bf359683" />
+ />
+<img width="592" height="766" alt="Screenshot 2026-03-22 123336" src="https://github.com/user-attachments/assets/477d89cb-d6d5-44ed-820a-6263dcd9f523" />
+<img width="1881" height="764" alt="Screenshot 2026-03-22 124042" src="https://github.com/user-attachments/assets/e7f95754-f5c7-4b28-9731-109f44c51b0c" />
+<img width="1914" height="828" alt="Screenshot 2026-03-22 123751" src="https://github.com/user-attachments/assets/c1243964-ee58-4547-bbfb-d5b7fa3f96f1" />
 
 ## 📁 Project Structure
 ```
-CodeWhisper/
+VocodeAI/
 │
 ├── backend/
 │ ├── config/
@@ -145,8 +142,8 @@ CodeWhisper/
 
 ```bash
 
-git clone https://github.com/your-username/codeWhisper.AI.git
-cd codeWhisper.AI
+git clone https://github.com/your-username/VocodeAI.git
+cd VocodeAI
 
 ```
 
@@ -208,4 +205,4 @@ Licensed under the ISC License.
  - 🛠️ Contribute
 
 ### 💡 Vision
-CodeWhisper.AI aims to become a complete cloud development environment where anyone can code, build, test, and deploy applications directly from the browser — without worrying about system setup.
+VocodeAI aims to become a complete cloud development environment where anyone can code, build, test, and deploy applications directly from the browser — without worrying about system setup.
