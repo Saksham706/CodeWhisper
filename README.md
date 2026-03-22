@@ -64,12 +64,11 @@ Supports execution of:
 ---
 
 ## Images 
-<img width="500" height="500" alt="Screenshot 2026-03-22 123313" src="https://github.com/user-attachments/assets/08b1dbab-adc1-423e-8aa1-7af6da2b168a"/>
-<img width="500" height="500" alt="Screenshot 2026-03-22 123325" src="https://github.com/user-attachments/assets/12a94d9d-1bc0-48b9-96c4-e3c4bf359683" />
- />
-<img width="450" height="450" alt="Screenshot 2026-03-22 123336" src="https://github.com/user-attachments/assets/477d89cb-d6d5-44ed-820a-6263dcd9f523" />
-<img width="500" height="500" alt="Screenshot 2026-03-22 124042" src="https://github.com/user-attachments/assets/e7f95754-f5c7-4b28-9731-109f44c51b0c" />
-<img width="500" height="500" alt="Screenshot 2026-03-22 123751" src="https://github.com/user-attachments/assets/c1243964-ee58-4547-bbfb-d5b7fa3f96f1" />
+<img width="1000" height="400" alt="Screenshot 2026-03-22 123313" src="https://github.com/user-attachments/assets/08b1dbab-adc1-423e-8aa1-7af6da2b168a"/>
+<img width="1000" height="400" alt="Screenshot 2026-03-22 123325" src="https://github.com/user-attachments/assets/12a94d9d-1bc0-48b9-96c4-e3c4bf359683" />
+<img width="450" height="500" alt="Screenshot 2026-03-22 123336" src="https://github.com/user-attachments/assets/477d89cb-d6d5-44ed-820a-6263dcd9f523" />
+<img width="1000" height="500" alt="Screenshot 2026-03-22 124042" src="https://github.com/user-attachments/assets/e7f95754-f5c7-4b28-9731-109f44c51b0c" />
+<img width="1000" height="500" alt="Screenshot 2026-03-22 123751" src="https://github.com/user-attachments/assets/c1243964-ee58-4547-bbfb-d5b7fa3f96f1" />
 
 ## 📁 Project Structure
 ```
